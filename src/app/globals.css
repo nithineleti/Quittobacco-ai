@@ -1,1 +1,260 @@
 @import "tailwindcss";
+
+/* Dark mode is class-based (.dark on <html>), set by an inline no-flash script. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ *
+ * Design tokens — the ONLY place raw color values live.
+ * Every value below is WCAG-AA verified in both themes (see README).
+ * Semantic names only. Components never use raw hex or palette classes.
+ * ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+
+  --surface: #fbfaf7;      /* warm near-white page background */
+  --surface-2: #f2f0e9;    /* subtly raised / muted fill */
+  --card: #ffffff;
+  --fg: #1b1e1c;           /* near-black — text color #1 */
+  --muted: #59645e;        /* muted grey — text color #2 */
+  --border: #e6e3da;       /* hairline */
+
+  --primary: #0e7a6b;      /* the one calm teal */
+  --primary-fg: #ffffff;
+  --primary-soft: #e3f1ee;
+
+  --success: #177245;
+  --success-fg: #ffffff;
+  --success-soft: #e6f1ea;
+  --warning: #8a5300;
+  --warning-fg: #ffffff;
+  --warning-soft: #fbefd9;
+  --alert: #9a4a0e;        /* orange — the "high" risk step */
+  --alert-fg: #ffffff;
+  --alert-soft: #fbe8d8;
+  --danger: #b4231f;
+  --danger-fg: #ffffff;
+  --danger-soft: #fbe7e6;
+
+  --gold: #8a6300;         /* gold as text on light surfaces */
+  --gold-fill: #e3a82b;    /* the reward accent — badges/rewards ONLY */
+  --gold-fg: #2a2008;      /* dark text on gold fill (both themes) */
+  --gold-soft: #faf0d6;
+
+  /* Badge-tier metals — reward surface only. Dark fg on each is AA-verified. */
+  --tier-bronze: #c6803f;
+  --tier-bronze-fg: #2a1808;
+  --tier-silver: #9ba7b3;
+  --tier-silver-fg: #1b1f24;
+  --tier-gold: #e3a82b;
+  --tier-gold-fg: #2a2008;
+  --tier-platinum: #aebdc8;
+  --tier-platinum-fg: #16222c;
+  --tier-diamond: #5fcbe2;
+  --tier-diamond-fg: #06313b;
+
+  /* Growing-plant illustration (the signature recovery metaphor). */
+  --plant-leaf: #2e9e6b;
+  --plant-leaf-2: #58c08a;
+  --plant-stem: #3e7a54;
+  --plant-pot: #c6703c;
+  --plant-pot-2: #a85a2c;
+  --plant-soil: #6b4a2e;
+
+  --ring: #0e7a6b;
+  --shadow-float: 0 6px 24px -8px rgb(20 25 20 / 0.18);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --surface: #131611;
+  --surface-2: #1b1f18;
+  --card: #1e221b;
+  --fg: #f1f1ea;
+  --muted: #a6ada3;
+  --border: #2e332b;
+
+  --primary: #2dd4bf;
+  --primary-fg: #04231f;
+  --primary-soft: #123029;
+
+  --success: #4ade80;
+  --success-fg: #04231f;
+  --success-soft: #16281c;
+  --warning: #fbbf24;
+  --warning-fg: #231a04;
+  --warning-soft: #2a2109;
+  --alert: #fb923c;
+  --alert-fg: #241206;
+  --alert-soft: #2a1b0c;
+  --danger: #f87171;
+  --danger-fg: #2a0a0a;
+  --danger-soft: #2a1211;
+
+  --gold: #e9c15e;
+  --gold-fill: #e9c15e;
+  --gold-fg: #2a2008;
+  --gold-soft: #282212;
+
+  /* Plant reads a touch brighter on the dark surface. */
+  --plant-leaf: #34b27a;
+  --plant-leaf-2: #6bd49e;
+  --plant-stem: #4a8d62;
+  --plant-pot: #ce7a46;
+  --plant-pot-2: #b0642f;
+  --plant-soil: #7a5636;
+
+  --ring: #2dd4bf;
+  --shadow-float: 0 6px 24px -8px rgb(0 0 0 / 0.5);
+}
+
+/* Map tokens into Tailwind's theme. `inline` keeps utilities referencing the
+ * CSS vars so .dark overrides propagate without regenerating utilities. */
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-card: var(--card);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-success: var(--success);
+  --color-success-fg: var(--success-fg);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-fg: var(--warning-fg);
+  --color-warning-soft: var(--warning-soft);
+  --color-alert: var(--alert);
+  --color-alert-fg: var(--alert-fg);
+  --color-alert-soft: var(--alert-soft);
+  --color-danger: var(--danger);
+  --color-danger-fg: var(--danger-fg);
+  --color-danger-soft: var(--danger-soft);
+
+  --color-gold: var(--gold);
+  --color-gold-fill: var(--gold-fill);
+  --color-gold-fg: var(--gold-fg);
+  --color-gold-soft: var(--gold-soft);
+
+  --color-tier-bronze: var(--tier-bronze);
+  --color-tier-bronze-fg: var(--tier-bronze-fg);
+  --color-tier-silver: var(--tier-silver);
+  --color-tier-silver-fg: var(--tier-silver-fg);
+  --color-tier-gold: var(--tier-gold);
+  --color-tier-gold-fg: var(--tier-gold-fg);
+  --color-tier-platinum: var(--tier-platinum);
+  --color-tier-platinum-fg: var(--tier-platinum-fg);
+  --color-tier-diamond: var(--tier-diamond);
+  --color-tier-diamond-fg: var(--tier-diamond-fg);
+
+  --color-plant-leaf: var(--plant-leaf);
+  --color-plant-leaf-2: var(--plant-leaf-2);
+  --color-plant-stem: var(--plant-stem);
+  --color-plant-pot: var(--plant-pot);
+  --color-plant-pot-2: var(--plant-pot-2);
+  --color-plant-soil: var(--plant-soil);
+
+  --color-ring: var(--ring);
+
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+
+  --shadow-float: var(--shadow-float);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--surface);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  /* Visible focus for keyboard users on every interactive element. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Larger default tap targets for form controls on cheap devices. */
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Motion budget (§6). Everything else is deleted.
+ * All of it collapses to ~0 under prefers-reduced-motion.
+ * ------------------------------------------------------------------ */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+/* Reserved delight: badge unlock + scratch-card reveal. */
+@keyframes pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+@keyframes ring-out {
+  from { opacity: 0.5; transform: scale(0.6); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+.animate-fade-in { animation: fade-in 150ms ease-out both; }
+.animate-sheet-up { animation: sheet-up 180ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-pop { animation: pop 500ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-ring-out { animation: ring-out 900ms ease-out both; }
+
+/* Functional breathing guides (§6). */
+@keyframes breathe-478 {
+  0% { transform: scale(0.6); }
+  21% { transform: scale(1); }
+  58% { transform: scale(1); }
+  100% { transform: scale(0.6); }
+}
+@keyframes breathe-46 {
+  0% { transform: scale(0.6); }
+  40% { transform: scale(1); }
+  100% { transform: scale(0.6); }
+}
+.animate-breathe-478 { animation: breathe-478 19s ease-in-out infinite; }
+.animate-breathe-46 { animation: breathe-46 10s ease-in-out infinite; }
+
+/* Confetti burst — reserved delight on badge/reward reveals. */
+@keyframes confetti {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+}
+.animate-confetti { animation: confetti var(--dur, 900ms) cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
