@@ -20,9 +20,60 @@ npm run typecheck  # tsc --noEmit
 npm run lint       # eslint (flat config)
 ```
 
-The app has **no backend and no account**. All state lives on the device
-(localStorage via Zustand `persist`; scan photos in IndexedDB). Start at `/` — it routes
-by real persisted state to onboarding or the dashboard.
+**Accounts are the one server-side thing.** Sign-in is required: every route
+except `/login`, `/offline` and `/supporter` redirects to `/login` without a
+session. Accounts live in **Postgres** — passwords are scrypt-hashed, sessions
+are signed JWTs in an HttpOnly cookie. All SQL is in one file
+(`src/lib/auth/db.ts`); the schema is created on first query.
+
+**Everything else still lives on the device** (localStorage via Zustand
+`persist`; scan photos in IndexedDB). The account carries your sign-in and
+nothing else — no quit data leaves the phone. After signing in, `/` routes by
+real persisted state to onboarding or the dashboard.
+
+### Environment
+
+Two variables, in `.env.local` for development and in the Netlify UI for
+production. Neither is ever committed.
+
+```bash
+# Any Postgres. Locally:  createdb quittobacco_dev
+DATABASE_URL=postgres://localhost:5432/quittobacco_dev
+# Required in production (the app refuses to boot without it). Generate with:
+#   openssl rand -base64 32
+SESSION_SECRET=…
+# Password-reset e-mail. Required in production — requesting a reset throws
+# without it rather than silently not sending. https://resend.com (free tier)
+RESEND_API_KEY=re_…
+MAIL_FROM="QuitTobacco <noreply@yourdomain.com>"
+# Absolute base URL used to build reset links. Netlify sets URL automatically;
+# set APP_URL if you use a custom domain.
+APP_URL=https://your-site.netlify.app
+```
+
+TLS is inferred from the host — off for `localhost`, on for anything else —
+and an explicit `?sslmode=require|disable` always wins. Server certificates are
+verified; set `PGSSL_NO_VERIFY=1` only for a self-signed server you control. On
+Neon / Netlify DB use the **pooled** endpoint (the host containing `-pooler`).
+
+### Security
+
+- **Passwords** — scrypt (`node:crypto`), 16-byte salt per user, constant-time compare.
+- **Sessions** — HS256 JWT in an HttpOnly, SameSite=Lax cookie; `Secure` in
+  production (off in dev so LAN phone testing over http works). 30-day expiry.
+- **Brute force** — 8 sign-ins per e-mail per 15 minutes, counted in Postgres
+  (`login_attempts`) so it survives serverless cold starts. Fails open if the
+  counter itself errors: the password check is still the real gate.
+- **Enumeration** — sign-in returns one message for both "no such user" and
+  "wrong password". Sign-up deliberately does reveal a taken e-mail, so the user
+  can be sent to sign-in instead.
+- **Headers** — `frame-ancestors 'none'` + `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy`, `Permissions-Policy` (camera stays allowed — the oral scan
+  needs it), HSTS in production, and `X-Powered-By` removed.
+- **Known gap** — there is no `script-src` CSP. A strict one needs a per-request
+  nonce, which forces every route to render dynamically and must be threaded
+  through the inline theme script in `app/layout.tsx`. Worth doing before this
+  handles real patient data.
 
 ---
 
@@ -34,6 +85,7 @@ The user lives in: **check in → craving hits → SOS → quick actions → pro
 
 ## Screens
 
+`/login` (language picker → email + password, sign in / create account) ·
 `/onboarding` (language → intro → 12-question intake → badge reveal) · `/dashboard` ·
 `/sos` (urge-surfing timer → quick actions) · `/learn` (lessons + watch tracking) ·
 `/assess` (oral check + before/after) · `/plan` · `/rewards` (ladder + scratch cards +
@@ -101,6 +153,27 @@ farming · ❌ social feed, likes, followers · ❌ an AI chatbot (can't be made
 medical questions at this scope) · ❌ ads, upsells, paywalls · ❌ more than five items in
 the bottom nav. Tier-2 extras (web push, quiz, voice journal, live supporter link) were
 scoped out; "share your progress" ships as a WhatsApp/Web-Share snapshot instead.
+
+---
+
+## Password reset
+
+`/login → Forgot your password?` → `/forgot` → e-mailed link → `/reset`.
+
+- The link carries 256 bits of entropy; only its SHA-256 is stored, so a leaked
+  database yields no usable links.
+- Single-use and 30-minute expiry. Using it burns every other outstanding reset
+  token for that account.
+- The request form answers identically whether or not the address is registered,
+  so it can't be used to discover who has an account. Capped at 3 per address
+  per 15 minutes so it can't be used to flood someone's inbox.
+- Completing a reset bumps `users.token_version`, which invalidates **every
+  existing session everywhere** — the point of resetting a password you believe
+  someone else knows.
+
+**Still not built:** sign-in by mobile number + OTP. `users.phone` is collected
+at sign-up (optional, validated, UNIQUE) so existing accounts won't need to
+re-register when it lands; it needs an SMS provider.
 
 ---
 

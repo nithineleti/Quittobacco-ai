@@ -67,6 +67,7 @@ interface Actions {
   addScan: (scan: ScanRecord) => void;
   setSavingsGoal: (goal: number) => void;
   saveProgress: (name?: string) => void;
+  linkAccount: (name?: string) => void;
   resetAll: () => void;
 }
 
@@ -161,6 +162,14 @@ export const useStore = create<Store>()(
 
       saveProgress: (name) =>
         set({ isGuest: false, displayName: name, savedAt: toISODate(new Date()) }),
+
+      // Seeds device state from the signed-in account. Never overwrites a name
+      // the user set on this device — the local value is the more deliberate one.
+      linkAccount: (name) =>
+        set((s) => ({
+          isGuest: false,
+          displayName: s.displayName ?? (name || undefined),
+        })),
 
       resetAll: () => set({ ...initial }),
     }),

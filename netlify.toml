@@ -1,0 +1,31 @@
+# Netlify build configuration.
+#
+# This app is NOT a static site: sign-in uses Server Actions and a Proxy
+# (Next 16's middleware), so it needs Netlify's Next.js runtime to render on
+# the server. That runtime is what turns `.next` into serverless functions —
+# a drag-and-drop of a built folder cannot run any of it.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Match the floor in package.json engines.
+  NODE_VERSION = "20"
+
+# Auto-installed by Netlify when it detects Next.js; pinned here so the build
+# doesn't depend on detection.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Required environment variables, set in the Netlify UI
+# (Site configuration → Environment variables) — never commit them:
+#
+#   DATABASE_URL    Postgres connection string. On Neon/Netlify DB use the
+#                   POOLED endpoint (the host containing `-pooler`) and keep
+#                   `?sslmode=require`.
+#   SESSION_SECRET  >=32 chars, used to sign session cookies.
+#                   Generate with: openssl rand -base64 32
+#
+# Both are read at request time. SESSION_SECRET is mandatory in production —
+# the app throws on boot without it rather than signing with a weak default.

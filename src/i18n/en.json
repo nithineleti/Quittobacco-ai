@@ -17,6 +17,62 @@
     "stop": "Stop",
     "dayN": "Day {{n}}"
   },
+  "auth": {
+    "title": "Welcome back",
+    "subtitle": "Sign in to keep your streak, rewards and progress safe.",
+    "language": "Language",
+    "tabSignIn": "Sign in",
+    "tabSignUp": "Create account",
+    "name": "Your name",
+    "namePlaceholder": "What should we call you?",
+    "email": "Email",
+    "emailPlaceholder": "you@example.com",
+    "phone": "Mobile number",
+    "phoneHelp": "Optional. We'll use this for OTP sign-in once it's ready.",
+    "password": "Password",
+    "passwordHint": "At least 8 characters.",
+    "confirm": "Confirm password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submitSignIn": "Sign in",
+    "submitSignUp": "Create my account",
+    "forgot": "Forgot your password?",
+    "otpSoon": "Signing in with a mobile number and OTP is coming in a future update.",
+    "signOut": "Sign out",
+    "signedIn": "You're signed in",
+    "signedInAs": "Signed in as {{email}}",
+    "continueToApp": "Continue to the app",
+    "languageHere": "Change your language here anytime.",
+    "errors": {
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "That doesn't look like a valid email address.",
+      "passwordRequired": "Please enter your password.",
+      "passwordShort": "Password must be at least 8 characters.",
+      "confirmMismatch": "The two passwords don't match.",
+      "phoneInvalid": "Enter a valid 10-digit mobile number.",
+      "phoneTaken": "That mobile number is already registered.",
+      "emailTaken": "This email already has an account. Please sign in instead.",
+      "badCredentials": "Wrong email or password. Please try again.",
+      "tooMany": "Too many attempts. Please wait a few minutes and try again.",
+      "resetInvalid": "This reset link is no longer valid. Please ask for a new one.",
+      "mailFailed": "We couldn't send the email just now. Please try again shortly."
+    },
+    "forgotTitle": "Reset your password",
+    "forgotBody": "Enter your email and we'll send you a link to choose a new password.",
+    "sendResetLink": "Send reset link",
+    "backToSignIn": "Back to sign in",
+    "resetSentTitle": "Check your email",
+    "resetSentBody": "If an account exists for {{email}}, we've sent a link to choose a new password.",
+    "resetSentHint": "The link works once and expires in 30 minutes. Check your spam folder too.",
+    "resetTitle": "Choose a new password",
+    "resetBody": "Pick something you'll remember. You'll be signed out everywhere else.",
+    "newPassword": "New password",
+    "saveNewPassword": "Save new password",
+    "resetDoneTitle": "Password changed",
+    "resetDoneBody": "You can now sign in with your new password.",
+    "resetExpiredTitle": "This link has expired",
+    "resetExpiredBody": "Reset links work once and last 30 minutes. Ask for a new one."
+  },
   "nav": {
     "home": "Home",
     "learn": "Learn",
@@ -26,14 +82,12 @@
     "sos": "SOS"
   },
   "onboarding": {
-    "chooseLanguage": "Choose your language",
-    "languageSub": "You can change this anytime.",
     "slide1Title": "A calmer way to quit",
     "slide1Body": "Small daily steps, real rewards, and support the moment a craving hits.",
     "slide2Title": "Real rewards, not points",
     "slide2Body": "Earn a free dental check-up, a care kit and more as you stay tobacco-free.",
     "slide3Title": "Your data stays with you",
-    "slide3Body": "Everything is stored on your phone. No account needed to begin.",
+    "slide3Body": "Your progress stays on your phone. Your account only carries your sign-in — nothing else leaves the device.",
     "formTitle": "A few quick questions",
     "formSub": "Your answers shape your plan and your very first badge.",
     "stepOf": "Question {{current}} of {{total}}",
@@ -55,27 +109,53 @@
       "31to60": "31–60 minutes",
       "after60": "After 60 minutes"
     },
-    "perDay": { "label": "About how many cigarettes or bidis a day?", "unit": "a day" },
-    "cansPerWeek": { "label": "About how many pouches or tins a week?", "unit": "a week" },
-    "hateFirst": { "label": "Would the first use of the day be the hardest to give up?" },
-    "difficultRefraining": { "label": "Is it hard to hold back where tobacco isn't allowed — a temple, hospital or bus?" },
+    "perDay": {
+      "label": "About how many cigarettes or bidis a day?",
+      "unit": "a day"
+    },
+    "cansPerWeek": {
+      "label": "About how many pouches or tins a week?",
+      "unit": "a week"
+    },
+    "hateFirst": {
+      "label": "Would the first use of the day be the hardest to give up?"
+    },
+    "difficultRefraining": {
+      "label": "Is it hard to hold back where tobacco isn't allowed — a temple, hospital or bus?"
+    },
     "swallowJuice": {
       "label": "Do you swallow the tobacco juice?",
       "never": "Never",
       "sometimes": "Sometimes",
       "always": "Always"
     },
-    "moreInMorning": { "label": "Do you use more in the first hours after waking?" },
-    "whenIll": { "label": "Do you use even when you're ill in bed most of the day?" },
-    "years": { "label": "How many years have you used tobacco?", "unit": "years" },
-    "spend": { "label": "How much do you spend a day?", "hint": "In rupees (₹). A rough number is fine." },
-    "attempts": { "label": "How many times have you tried to quit before?", "unit": "times" },
+    "moreInMorning": {
+      "label": "Do you use more in the first hours after waking?"
+    },
+    "whenIll": {
+      "label": "Do you use even when you're ill in bed most of the day?"
+    },
+    "years": {
+      "label": "How many years have you used tobacco?",
+      "unit": "years"
+    },
+    "spend": {
+      "label": "How much do you spend a day?",
+      "hint": "In rupees (₹). A rough number is fine."
+    },
+    "attempts": {
+      "label": "How many times have you tried to quit before?",
+      "unit": "times"
+    },
     "motivation": {
       "label": "How ready are you to quit right now?",
       "low": "Not yet",
       "high": "Fully ready"
     },
-    "triggers": { "label": "What makes you want to use? Pick any that fit.", "sub": "We'll use these to build your plan." }
+    "triggers": {
+      "label": "What makes you want to use? Pick any that fit.",
+      "sub": "We'll use these to build your plan."
+    }
   },
   "badge": {
     "youreStarting": "You're starting at",
@@ -102,7 +182,7 @@
     "recovery": "Recovery journey",
     "nextReward": "Next reward",
     "moreDays_one": "{{count}} more day",
-      "moreDays_other": "{{count}} more days",
+    "moreDays_other": "{{count}} more days",
     "ready": "Ready to claim!",
     "checkInTitle": "Today's check-in",
     "checkInSub": "Takes under 10 seconds.",
@@ -141,7 +221,7 @@
     "needEvidence": "Almost there",
     "needsList": "To unlock this real reward, you still need:",
     "moreDays_one": "{{count}} more day",
-      "moreDays_other": "{{count}} more days",
+    "moreDays_other": "{{count}} more days",
     "readyToClaim": "Ready to claim",
     "demoWatermark": "DEMO — not a real voucher",
     "code": "Redemption code",
@@ -156,14 +236,38 @@
     "lockedTag": "Locked",
     "shareText": "I've earned {{reward}} on my tobacco-free journey — {{days}} days and counting! 🌱",
     "ladder": {
-      "day1": { "title": "First day free", "detail": "You made it through day one — the hardest step." },
-      "day3": { "title": "72 hours", "detail": "Nicotine is leaving your body. Cravings ease from here." },
-      "day7": { "title": "One week — certificate", "detail": "A shareable certificate for your first tobacco-free week." },
-      "day15": { "title": "Free dental check-up", "detail": "A free oral-health check-up at a partner clinic." },
-      "day30": { "title": "Oral-care voucher + Gold", "detail": "A voucher toward oral-care products, and your Gold tier." },
-      "day90": { "title": "Toothpaste + toothbrush kit", "detail": "A free oral-care kit from a partner brand." },
-      "day180": { "title": "Dental cleaning + Platinum", "detail": "A professional cleaning, and your Platinum tier." },
-      "day365": { "title": "Full dental exam + Diamond", "detail": "A full exam, Diamond tier, and a 1-year certificate." }
+      "day1": {
+        "title": "First day free",
+        "detail": "You made it through day one — the hardest step."
+      },
+      "day3": {
+        "title": "72 hours",
+        "detail": "Nicotine is leaving your body. Cravings ease from here."
+      },
+      "day7": {
+        "title": "One week — certificate",
+        "detail": "A shareable certificate for your first tobacco-free week."
+      },
+      "day15": {
+        "title": "Free dental check-up",
+        "detail": "A free oral-health check-up at a partner clinic."
+      },
+      "day30": {
+        "title": "Oral-care voucher + Gold",
+        "detail": "A voucher toward oral-care products, and your Gold tier."
+      },
+      "day90": {
+        "title": "Toothpaste + toothbrush kit",
+        "detail": "A free oral-care kit from a partner brand."
+      },
+      "day180": {
+        "title": "Dental cleaning + Platinum",
+        "detail": "A professional cleaning, and your Platinum tier."
+      },
+      "day365": {
+        "title": "Full dental exam + Diamond",
+        "detail": "A full exam, Diamond tier, and a 1-year certificate."
+      }
     }
   },
   "checkin": {
@@ -320,7 +424,7 @@
     "themeDark": "Dark",
     "themeSystem": "System",
     "privacy": "Your privacy",
-    "privacyBody": "All your data lives on this device. Nothing is sent to a server.",
+    "privacyBody": "Your quit data — check-ins, scans, streak and rewards — stays on this device. Only your sign-in details and language are stored with your account.",
     "export": "Export my data",
     "exportBtn": "Download",
     "supporter": "Share with a supporter",
@@ -337,7 +441,11 @@
     "clearTitle": "Clear all data",
     "clearBody": "This erases your journey on this device. It can't be undone.",
     "clearBtn": "Clear everything",
-    "help": "Help & support"
+    "help": "Help & support",
+    "deleteAccountBtn": "Delete my account",
+    "deleteAccountTitle": "Delete your account?",
+    "deleteAccountBody": "This permanently removes your email, mobile number and password from our servers, and clears this phone. It cannot be undone.",
+    "deleteAccountConfirm": "Yes, delete my account"
   },
   "admin": {
     "title": "Clinician view",

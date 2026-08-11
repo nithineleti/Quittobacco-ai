@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { BADGE_META } from "@/data/badges";
 import { loc, type Language } from "@/data/types";
 import { LANGUAGES } from "@/i18n/languages";
+import { deleteAccount, signOut, updateLanguage } from "@/lib/auth/actions";
 import { cn } from "@/lib/cn";
 import { shareText } from "@/lib/share";
 import { badgeInfo, moneySavedTotal, streakDays } from "@/lib/selectors";
@@ -31,6 +32,8 @@ export function ProfileScreen() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [name, setName] = useState("");
   const [clearOpen, setClearOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (!hydrated) {
     return (
@@ -43,6 +46,8 @@ export function ProfileScreen() {
   }
 
   const lang = s.language;
+  const currentLanguageLabel =
+    LANGUAGES.find((l) => l.code === lang)?.label ?? LANGUAGES[0].label;
   const badge = badgeInfo(s, new Date());
   const meta = BADGE_META[badge.tier];
   const streak = streakDays(s, new Date());
@@ -116,30 +121,66 @@ export function ProfileScreen() {
         </Card>
       )}
 
-      {/* Language */}
-      <Card className="flex flex-col gap-3">
-        <p className="flex items-center gap-2 text-base font-semibold text-fg">
-          <Icon name="Globe" className="size-5" />
-          {t("profile.language")}
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {LANGUAGES.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              aria-pressed={lang === l.code}
-              onClick={() => setLanguage(l.code as Language)}
-              className={cn(
-                "min-h-12 rounded-card border text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                lang === l.code
-                  ? "border-primary bg-primary-soft text-primary"
-                  : "border-border bg-card text-fg hover:bg-surface-2",
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
+      {/* Language — collapsed to one row; the chevron opens the choices. */}
+      <Card padded={false} className="overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setLangOpen((o) => !o)}
+          aria-expanded={langOpen}
+          aria-controls="language-options"
+          className="flex min-h-14 w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        >
+          <Icon name="Globe" className="size-5 text-muted" />
+          <span className="flex-1 text-base font-semibold text-fg">
+            {t("profile.language")}
+          </span>
+          {/* The current choice stays visible while collapsed. */}
+          <span className="text-base text-muted">{currentLanguageLabel}</span>
+          <Icon
+            name="ChevronDown"
+            className={cn(
+              "size-5 shrink-0 text-muted transition-transform",
+              langOpen && "rotate-180",
+            )}
+          />
+        </button>
+
+        {langOpen && (
+          <div
+            id="language-options"
+            role="radiogroup"
+            aria-label={t("profile.language")}
+            className="flex flex-col border-t border-border"
+          >
+            {LANGUAGES.map((l) => {
+              const active = lang === l.code;
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => {
+                    // Device first so the UI switches instantly, then the
+                    // account so the choice survives a reinstall or new phone.
+                    setLanguage(l.code as Language);
+                    void updateLanguage(l.code);
+                    setLangOpen(false);
+                  }}
+                  className={cn(
+                    "flex min-h-14 items-center gap-3 pl-12 pr-4 text-left text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    active
+                      ? "bg-primary-soft font-semibold text-primary"
+                      : "text-fg hover:bg-surface-2",
+                  )}
+                >
+                  <span className="flex-1">{l.label}</span>
+                  {active && <Icon name="Check" className="size-5 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       {/* Actions */}
@@ -170,6 +211,25 @@ export function ProfileScreen() {
         {t("profile.privacyBody")}
       </p>
 
+      {/* Sign out is a plain form post so it works with JS still loading. */}
+      <form action={signOut}>
+        <Button type="submit" variant="secondary" full>
+          <Icon name="LogOut" className="size-5" />
+          {t("auth.signOut")}
+        </Button>
+      </form>
+
+      {/* Erasing the account is separate from clearing the device: one removes
+          your data from the server, the other from this phone. */}
+      <Button
+        variant="ghost"
+        onClick={() => setDeleteOpen(true)}
+        className="text-danger"
+      >
+        <Icon name="Trash2" className="size-5" />
+        {t("profile.deleteAccountBtn")}
+      </Button>
+
       <Button variant="ghost" onClick={() => setClearOpen(true)} className="text-danger">
         <Icon name="Trash2" className="size-5" />
         {t("profile.clearBtn")}
@@ -199,6 +259,33 @@ export function ProfileScreen() {
             {t("profile.clearBtn")}
           </Button>
           <Button variant="ghost" onClick={() => setClearOpen(false)}>
+            {t("common.cancel")}
+          </Button>
+        </div>
+      </Sheet>
+
+      {/* Delete account — irreversible, and it removes server-side data, so it
+          gets its own confirmation rather than sharing the "clear device" one. */}
+      <Sheet
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        title={t("profile.deleteAccountTitle")}
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-base text-fg">{t("profile.deleteAccountBody")}</p>
+          <form
+            action={async () => {
+              // Wipe this device too, so deleting the account doesn't leave the
+              // previous user's streak and scans behind on a shared phone.
+              resetAll();
+              await deleteAccount();
+            }}
+          >
+            <Button type="submit" variant="danger" size="lg" full>
+              {t("profile.deleteAccountConfirm")}
+            </Button>
+          </form>
+          <Button variant="ghost" onClick={() => setDeleteOpen(false)}>
             {t("common.cancel")}
           </Button>
         </div>

@@ -17,7 +17,12 @@ export function ProgressBar({
   value: number;
   tone?: Tone;
   className?: string;
-  label?: string;
+  /**
+   * Required, not optional: a role="progressbar" with no accessible name is a
+   * WCAG failure (aria-progressbar-name), and an optional prop let one call
+   * site quietly ship without it.
+   */
+  label: string;
 }) {
   const pct = Math.max(0, Math.min(100, value));
   return (

@@ -1,8 +1,12 @@
 // Hand-written service worker (Next 16 has no built-in SW; Serwist needs
 // webpack, which conflicts with Turbopack). Offline-first for the moments that
 // matter — SOS, breathing, quick actions, lessons (§7).
-const CACHE = "qt-v3";
-const CORE = ["/", "/dashboard", "/sos", "/learn", "/offline", "/manifest.webmanifest"];
+const CACHE = "qt-v4";
+// Only precache what is reachable WITHOUT a session. "/", "/dashboard", "/sos"
+// and "/learn" are auth-gated now: precaching them stores whatever the install
+// happened to see — often the /login redirect — under the wrong key.
+// Signed-in pages are still cached at runtime by the network-first handler.
+const CORE = ["/login", "/offline", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -33,11 +37,20 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          // Never cache a redirect under the requested URL. fetch() follows
+          // redirects, so signed-in /login returns the DESTINATION's html —
+          // caching that would make /login serve the app page when offline.
+          if (res.ok && !res.redirected) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
           return res;
         })
-        .catch(() => caches.match(req).then((r) => r || caches.match("/offline") || caches.match("/"))),
+        .catch(() =>
+          caches
+            .match(req)
+            .then((r) => r || caches.match("/offline") || caches.match("/login")),
+        ),
     );
     return;
   }
@@ -47,8 +60,10 @@ self.addEventListener("fetch", (event) => {
     caches.match(req).then((cached) => {
       const network = fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          if (res.ok && !res.redirected) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
           return res;
         })
         .catch(() => cached);

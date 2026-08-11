@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Brand } from "@/components/Brand";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { BadgeReveal } from "@/components/feature/BadgeReveal";
 import { TRIGGERS } from "@/data/triggers";
-import { loc, type Language } from "@/data/types";
-import { LANGUAGES } from "@/i18n/languages";
+import { loc } from "@/data/types";
 import { cn } from "@/lib/cn";
 import {
   currentBadge,
@@ -25,7 +23,7 @@ import {
 } from "@/lib/scoring";
 import { useStore } from "@/lib/store";
 
-type Phase = "language" | "intro" | "form" | "reveal";
+type Phase = "intro" | "form" | "reveal";
 
 const STEP_KEYS = [
   "type",
@@ -167,10 +165,9 @@ export function OnboardingFlow() {
   const router = useRouter();
   const { t } = useTranslation();
   const lang = useStore((s) => s.language);
-  const setLanguage = useStore((s) => s.setLanguage);
   const completeIntake = useStore((s) => s.completeIntake);
 
-  const [phase, setPhase] = useState<Phase>("language");
+  const [phase, setPhase] = useState<Phase>("intro");
   const [intro, setIntro] = useState(0);
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Partial<IntakeAnswers>>({ triggers: [], motivation: 5 });
@@ -246,34 +243,8 @@ export function OnboardingFlow() {
     else setStep((s) => s - 1);
   };
 
-  // ---- language ----
-  if (phase === "language") {
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-8 px-6 py-10">
-        <div className="flex flex-col items-center gap-3 text-center">
-          <Brand />
-          <h1 className="text-2xl font-semibold text-fg">{t("onboarding.chooseLanguage")}</h1>
-          <p className="text-base text-muted">{t("onboarding.languageSub")}</p>
-        </div>
-        <div className="flex flex-col gap-3">
-          {LANGUAGES.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => {
-                setLanguage(l.code as Language);
-                setPhase("intro");
-              }}
-              className="flex min-h-16 items-center justify-between rounded-card border border-border bg-card px-5 text-lg font-semibold text-fg hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {l.label}
-              <Icon name="ChevronRight" className="size-5 text-muted" />
-            </button>
-          ))}
-        </div>
-      </main>
-    );
-  }
+  // Language is chosen once, on the login page, and changed later in Profile —
+  // it is deliberately NOT asked again here.
 
   // ---- intro ----
   if (phase === "intro") {

@@ -44,3 +44,6 @@ next-env.d.ts
 /.dev/
 /playwright-report/
 /test-results/
+
+# account database + dev session secret (never commit real user data)
+/data/

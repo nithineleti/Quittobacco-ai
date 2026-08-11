@@ -16,25 +16,32 @@
   },
   "dependencies": {
     "i18next": "^26.3.6",
+    "jose": "^6.2.4",
     "lucide-react": "^1.24.0",
-    "next": "16.2.10",
+    "next": "16.3.0",
+    "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-i18next": "^17.0.9",
     "recharts": "^3.9.2",
+    "server-only": "^0.0.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.43",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "axe-core": "^4.12.1",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.3.0",
     "playwright": "^1.61.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "nanoid": "^3.3.17"
   }
 }

@@ -91,7 +91,14 @@ export function LearnScreen() {
           </p>
           <Icon name="PlayCircle" className="size-5 text-primary" />
         </div>
-        <ProgressBar value={(videosDone / videoItems.length) * 100} tone="primary" />
+        <ProgressBar
+          value={(videosDone / videoItems.length) * 100}
+          tone="primary"
+          label={t("learn.videosDone", {
+            done: videosDone,
+            total: videoItems.length,
+          })}
+        />
       </Card>
 
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
