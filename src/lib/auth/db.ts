@@ -92,6 +92,11 @@ CREATE TABLE IF NOT EXISTS users (
 -- the whole point of resetting a password you think someone else knows.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 0;
 
+-- Operator access to the backend dashboard, which exposes EVERY user's data.
+-- Defaults to false: it must be granted deliberately, never inherited by
+-- ordinary sign-up.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+
 -- Reserved for the OTP work (phone sign-in, e-mailed password reset). The
 -- table exists now so adding delivery later is a feature, not a migration.
 CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -168,6 +173,7 @@ export interface UserRow {
   created_at: string;
   last_login_at: string | null;
   token_version: number;
+  is_admin: boolean;
 }
 
 export interface AuthTokenRow {
@@ -299,6 +305,51 @@ export async function resetLoginAttempts(key: string): Promise<void> {
   } catch {
     // Non-fatal: the row ages out of its window on its own.
   }
+}
+
+// ------------------------------------------------------------------ admin ---
+
+/** One row per user for the dashboard list. Never includes password_hash. */
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  display_name: string | null;
+  phone: string | null;
+  language: string;
+  is_admin: boolean;
+  created_at: string;
+  last_login_at: string | null;
+  synced_at: string | null;
+  state: unknown | null;
+}
+
+/**
+ * Every user with their journey, for the operator dashboard.
+ *
+ * `password_hash` is deliberately never selected. It is a one-way scrypt hash —
+ * there is no plaintext password to show anyone, by design.
+ */
+export async function listAllUsers(): Promise<AdminUserRow[]> {
+  return query<AdminUserRow>(
+    `SELECT u.id, u.email, u.display_name, u.phone, u.language, u.is_admin,
+            u.created_at, u.last_login_at,
+            s.updated_at AS synced_at, s.state
+       FROM users u
+       LEFT JOIN user_state s ON s.user_id = u.id
+      ORDER BY u.created_at DESC`,
+  );
+}
+
+export async function countAuthTokens(): Promise<number> {
+  const rows = await query<{ n: string }>(
+    "SELECT count(*) AS n FROM auth_tokens WHERE consumed_at IS NULL AND expires_at > now()",
+  );
+  return Number(rows[0]?.n ?? 0);
+}
+
+/** Grants or revokes operator access. */
+export async function setAdmin(userId: string, isAdmin: boolean): Promise<void> {
+  await query("UPDATE users SET is_admin = $2 WHERE id = $1", [userId, isAdmin]);
 }
 
 // -------------------------------------------------------------- user state ---

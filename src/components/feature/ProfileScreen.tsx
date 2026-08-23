@@ -21,7 +21,7 @@ import { shareText } from "@/lib/share";
 import { badgeInfo, moneySavedTotal, streakDays } from "@/lib/selectors";
 import { useHydrated, useStore } from "@/lib/store";
 
-export function ProfileScreen() {
+export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
   const hydrated = useHydrated();
   const { t } = useTranslation();
   const router = useRouter();
@@ -199,6 +199,16 @@ export function ProfileScreen() {
           <span className="flex-1 text-base text-fg">{t("profile.help")}</span>
           <Icon name="ChevronRight" className="size-5 text-muted" />
         </Link>
+        {isAdmin && (
+          <Link
+            href="/backend"
+            className="flex min-h-14 items-center gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <Icon name="Activity" className="size-5 text-muted" />
+            <span className="flex-1 text-base text-fg">Backend dashboard</span>
+            <Icon name="ChevronRight" className="size-5 text-muted" />
+          </Link>
+        )}
         <Link
           href="/admin"
           className="flex min-h-14 items-center gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"

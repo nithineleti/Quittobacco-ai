@@ -60,12 +60,28 @@ MAIL_FROM="QuitTobacco <noreply@yourdomain.com>"
 # Absolute base URL used to build reset links. Netlify sets URL automatically;
 # set APP_URL if you use a custom domain.
 APP_URL=https://your-site.netlify.app
+# Operator access to /backend. Comma-separated, lowercase. Exists so the FIRST
+# operator can get in on a fresh deploy; after that prefer the database flag:
+#   UPDATE users SET is_admin = true WHERE email = 'you@example.com';
+ADMIN_EMAILS=you@example.com
 ```
 
 TLS is inferred from the host — off for `localhost`, on for anything else —
 and an explicit `?sslmode=require|disable` always wins. Server certificates are
 verified; set `PGSSL_NO_VERIFY=1` only for a self-signed server you control. On
 Neon / Netlify DB use the **pooled** endpoint (the host containing `-pooler`).
+
+### Backend dashboard
+
+`/backend` lists every account and every synced journey, with a JSON export at
+`/backend/export`. It is **operator-only**: `users.is_admin`, or an address in
+`ADMIN_EMAILS`. Non-operators get a 404 rather than a 403 — a "forbidden" reply
+would confirm the route exists and is worth attacking — and the Profile link is
+hidden from them.
+
+It does not show passwords, because none are stored: each is a one-way scrypt
+hash with a per-user salt. There is no plaintext to reveal to anyone, operator
+included. Users who forget theirs use the reset flow.
 
 ### Security
 

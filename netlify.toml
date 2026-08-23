@@ -27,5 +27,8 @@
 #   SESSION_SECRET  >=32 chars, used to sign session cookies.
 #                   Generate with: openssl rand -base64 32
 #
+#   ADMIN_EMAILS    Comma-separated operator addresses for /backend. Grants
+#                   access to EVERY user's data — keep this list tiny.
+#
 # Both are read at request time. SESSION_SECRET is mandatory in production —
 # the app throws on boot without it rather than signing with a weak default.
