@@ -26,7 +26,19 @@ session. Accounts live in **Postgres** — passwords are scrypt-hashed, sessions
 are signed JWTs in an HttpOnly cookie. All SQL is in one file
 (`src/lib/auth/db.ts`); the schema is created on first query.
 
-**Everything else still lives on the device** (localStorage via Zustand
+**The quit journey is backed up to the account.** Check-ins, streak, intake
+answers, badges, rewards and oral-scan records sync to Postgres (`user_state`,
+a JSONB document), so signing in on a new phone restores the journey instead of
+replaying onboarding. Scan **photos** are the exception — they stay in IndexedDB
+on the device, being far too large to ship.
+
+The device remains the working copy: every write lands locally first, so the app
+keeps working with no signal (which SOS depends on). Conflicts resolve
+last-write-wins on the device clock. Signing out flushes the journey to the
+server and then wipes the device, so a shared phone never shows the previous
+person's data.
+
+**The rest still lives on the device** (localStorage via Zustand
 `persist`; scan photos in IndexedDB). The account carries your sign-in and
 nothing else — no quit data leaves the phone. After signing in, `/` routes by
 real persisted state to onboarding or the dashboard.

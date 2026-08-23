@@ -1,4 +1,5 @@
 import { AccountSync } from "@/components/AccountSync";
+import { StateSync } from "@/components/StateSync";
 import { AppShell } from "@/components/feature/AppShell";
 import { getCurrentUser } from "@/lib/auth/dal";
 
@@ -18,6 +19,9 @@ export default async function AppLayout({
         displayName={user.display_name ?? undefined}
         language={user.language}
       />
+      {/* Backs the quit journey up to the account and restores it on a new
+          device. Mounted here so it covers every signed-in screen. */}
+      <StateSync />
       <AppShell>{children}</AppShell>
     </>
   );

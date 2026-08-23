@@ -109,6 +109,22 @@ CREATE INDEX IF NOT EXISTS idx_tokens_user ON auth_tokens(user_id, purpose);
 -- Reset links are looked up by their hash, so that lookup must be indexed.
 CREATE INDEX IF NOT EXISTS idx_tokens_hash ON auth_tokens(code_hash);
 
+-- The user's quit journey, mirrored from the device.
+--
+-- Stored as a JSONB document rather than one table per concept (check-ins,
+-- scans, rewards...). The shape IS the client's persisted state, it evolves
+-- with the client, and nothing queries across users — normalising it would buy
+-- migrations and joins we have no use for. Revisit if a real cross-patient
+-- clinician dashboard is ever built.
+CREATE TABLE IF NOT EXISTS user_state (
+  user_id    TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  state      JSONB NOT NULL,
+  -- The DEVICE's modification time, not the server's. Conflict resolution is
+  -- last-write-wins, and the device is where writes actually happen.
+  updated_at TIMESTAMPTZ NOT NULL,
+  revision   INTEGER NOT NULL DEFAULT 1
+);
+
 -- Brute-force throttle. Lives in the database, not process memory: serverless
 -- functions are recycled constantly, and an in-memory counter resets with them,
 -- so an attacker only has to wait out a cold start.
@@ -283,6 +299,49 @@ export async function resetLoginAttempts(key: string): Promise<void> {
   } catch {
     // Non-fatal: the row ages out of its window on its own.
   }
+}
+
+// -------------------------------------------------------------- user state ---
+
+export interface UserStateRow {
+  state: unknown;
+  updated_at: string;
+  revision: number;
+}
+
+export async function loadUserState(
+  userId: string,
+): Promise<UserStateRow | undefined> {
+  const rows = await query<UserStateRow>(
+    "SELECT state, updated_at, revision FROM user_state WHERE user_id = $1",
+    [userId],
+  );
+  return rows[0];
+}
+
+/**
+ * Upsert, but only if the incoming device timestamp is newer than what is
+ * stored. Doing the comparison inside the statement means two devices racing
+ * can't have the older one land last and clobber the newer.
+ */
+export async function saveUserState(
+  userId: string,
+  state: unknown,
+  updatedAt: string,
+): Promise<{ stored: boolean; updated_at: string }> {
+  const rows = await query<{ updated_at: string; stored: boolean }>(
+    `INSERT INTO user_state (user_id, state, updated_at, revision)
+     VALUES ($1, $2::jsonb, $3::timestamptz, 1)
+     ON CONFLICT (user_id) DO UPDATE SET
+       state      = CASE WHEN EXCLUDED.updated_at > user_state.updated_at
+                         THEN EXCLUDED.state ELSE user_state.state END,
+       revision   = CASE WHEN EXCLUDED.updated_at > user_state.updated_at
+                         THEN user_state.revision + 1 ELSE user_state.revision END,
+       updated_at = GREATEST(user_state.updated_at, EXCLUDED.updated_at)
+     RETURNING updated_at, (updated_at = $3::timestamptz) AS stored`,
+    [userId, JSON.stringify(state), updatedAt],
+  );
+  return { stored: rows[0]?.stored ?? false, updated_at: rows[0]?.updated_at };
 }
 
 /** Language is account-level, so the choice follows the user to a new device. */

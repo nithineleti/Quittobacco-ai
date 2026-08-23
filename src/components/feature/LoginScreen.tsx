@@ -12,6 +12,7 @@ import { Field, Input, inputClasses } from "@/components/ui/Field";
 import { LANGUAGES } from "@/i18n/languages";
 import { cn } from "@/lib/cn";
 import { useHydrated, useStore } from "@/lib/store";
+import { signOutCleanup } from "@/lib/sync";
 import type { Language } from "@/data/types";
 import {
   signIn,
@@ -179,7 +180,7 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
             {t("auth.continueToApp")}
           </Link>
 
-          <form action={signOut}>
+          <form action={async () => { await signOutCleanup(); await signOut(); }}>
             <Button type="submit" variant="secondary" full>
               {t("auth.signOut")}
             </Button>
@@ -187,7 +188,7 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
 
           {/* Without this there is no way to reach the sign-up form while
               signed in — which matters on a phone shared by a family. */}
-          <form action={signOutAndSignUp}>
+          <form action={async () => { await signOutCleanup(); await signOutAndSignUp(); }}>
             <button
               type="submit"
               className="min-h-11 w-full text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

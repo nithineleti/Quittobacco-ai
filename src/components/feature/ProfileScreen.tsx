@@ -16,6 +16,7 @@ import { loc, type Language } from "@/data/types";
 import { LANGUAGES } from "@/i18n/languages";
 import { deleteAccount, signOut, updateLanguage } from "@/lib/auth/actions";
 import { cn } from "@/lib/cn";
+import { resetSync, signOutCleanup } from "@/lib/sync";
 import { shareText } from "@/lib/share";
 import { badgeInfo, moneySavedTotal, streakDays } from "@/lib/selectors";
 import { useHydrated, useStore } from "@/lib/store";
@@ -82,6 +83,9 @@ export function ProfileScreen() {
 
   const doClear = () => {
     resetAll();
+    // Drop the sync mark too, or the next load would treat the now-empty
+    // device as authoritative and wipe the server copy.
+    resetSync();
     setClearOpen(false);
     router.replace("/onboarding");
   };
@@ -212,7 +216,14 @@ export function ProfileScreen() {
       </p>
 
       {/* Sign out is a plain form post so it works with JS still loading. */}
-      <form action={signOut}>
+      <form
+        action={async () => {
+          // Save anything outstanding, then clear this device before the
+          // session goes — see signOutCleanup.
+          await signOutCleanup();
+          await signOut();
+        }}
+      >
         <Button type="submit" variant="secondary" full>
           <Icon name="LogOut" className="size-5" />
           {t("auth.signOut")}
@@ -278,6 +289,7 @@ export function ProfileScreen() {
               // Wipe this device too, so deleting the account doesn't leave the
               // previous user's streak and scans behind on a shared phone.
               resetAll();
+              resetSync();
               await deleteAccount();
             }}
           >

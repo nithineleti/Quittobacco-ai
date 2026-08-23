@@ -36,7 +36,7 @@ export interface ScanRecord {
   note?: string;
 }
 
-interface PersistedState {
+export interface PersistedState {
   language: Language;
   hasOnboarded: boolean;
   isGuest: boolean;
@@ -68,15 +68,32 @@ interface Actions {
   setSavingsGoal: (goal: number) => void;
   saveProgress: (name?: string) => void;
   linkAccount: (name?: string) => void;
+  /** Replaces the whole journey with a copy restored from the account. */
+  adoptServerState: (incoming: Partial<PersistedState>) => void;
   resetAll: () => void;
 }
 
 export type Store = PersistedState & Actions;
 
+/**
+ * Every persisted key is listed, including the optional ones as `undefined`.
+ *
+ * This matters: `resetAll` and `adoptServerState` apply this with zustand's
+ * SHALLOW merge, so a key merely omitted here is left untouched rather than
+ * cleared. Omitting the optional six meant "Clear everything" silently kept the
+ * previous user's name, quit date, intake answers and dependence score on the
+ * device. Keep this exhaustive — add a field to PersistedState, add it here.
+ */
 const initial: PersistedState = {
   language: "en",
   hasOnboarded: false,
   isGuest: true,
+  displayName: undefined,
+  intakeAnswers: undefined,
+  intake: undefined,
+  quitDate: undefined,
+  savingsGoal: undefined,
+  savedAt: undefined,
   slips: [],
   checkIns: [],
   claimed: {},
@@ -170,6 +187,14 @@ export const useStore = create<Store>()(
           isGuest: false,
           displayName: s.displayName ?? (name || undefined),
         })),
+
+      /**
+       * Wholesale replace, used when the account holds a newer copy than this
+       * device (a reinstall, or a second phone). Starts from `initial` so a
+       * field absent from the server copy resets rather than lingering from
+       * whoever used this device last.
+       */
+      adoptServerState: (incoming) => set({ ...initial, ...incoming }),
 
       resetAll: () => set({ ...initial }),
     }),
