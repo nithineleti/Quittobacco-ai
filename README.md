@@ -15,14 +15,14 @@ Tailwind CSS v4**. Ships as an installable, offline-first PWA in **English + Hin
 npm install
 npm run dev        # http://localhost:3000
 npm run build && npm run start   # production
-npm test           # 38 unit tests (scoring / rewards / health)
+npm test           # 50 unit tests (scoring / rewards / health / auth)
 npm run typecheck  # tsc --noEmit
 npm run lint       # eslint (flat config)
 ```
 
 **Accounts are the one server-side thing.** Sign-in is required: every route
-except `/login`, `/offline` and `/supporter` redirects to `/login` without a
-session. Accounts live in **Postgres** — passwords are scrypt-hashed, sessions
+except `/login`, `/forgot`, `/reset`, `/offline` and `/supporter` redirects to
+`/login` without a session. Accounts live in **Postgres** — passwords are scrypt-hashed, sessions
 are signed JWTs in an HttpOnly cookie. All SQL is in one file
 (`src/lib/auth/db.ts`); the schema is created on first query.
 
@@ -38,10 +38,9 @@ last-write-wins on the device clock. Signing out flushes the journey to the
 server and then wipes the device, so a shared phone never shows the previous
 person's data.
 
-**The rest still lives on the device** (localStorage via Zustand
-`persist`; scan photos in IndexedDB). The account carries your sign-in and
-nothing else — no quit data leaves the phone. After signing in, `/` routes by
-real persisted state to onboarding or the dashboard.
+The device copy lives in localStorage via Zustand `persist`; scan photos in
+IndexedDB. After signing in, `/` waits for the restore, then routes by real
+state to onboarding or the dashboard.
 
 ### Environment
 
@@ -98,7 +97,7 @@ The user lives in: **check in → craving hits → SOS → quick actions → pro
 ## Screens
 
 `/login` (language picker → email + password, sign in / create account) ·
-`/onboarding` (language → intro → 12-question intake → badge reveal) · `/dashboard` ·
+`/onboarding` (intro → 12-question intake → badge reveal) · `/dashboard` ·
 `/sos` (urge-surfing timer → quick actions) · `/learn` (lessons + watch tracking) ·
 `/assess` (oral check + before/after) · `/plan` · `/rewards` (ladder + scratch cards +
 wallet) · `/progress` (recovery timeline, savings, badges, trigger insight) · `/help` ·
