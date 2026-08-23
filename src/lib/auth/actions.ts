@@ -309,3 +309,15 @@ export async function signOut(): Promise<void> {
   await deleteSession();
   redirect("/login");
 }
+
+/**
+ * Sign out and land straight on the "create account" form.
+ *
+ * Without this, a signed-in visitor to /login sees only the account card, so
+ * there is no route to a second account short of finding Sign out first — a
+ * real problem on a phone shared by a family.
+ */
+export async function signOutAndSignUp(): Promise<void> {
+  await deleteSession();
+  redirect("/login?mode=signup");
+}

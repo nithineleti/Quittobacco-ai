@@ -71,7 +71,8 @@
     "resetDoneTitle": "Password changed",
     "resetDoneBody": "You can now sign in with your new password.",
     "resetExpiredTitle": "This link has expired",
-    "resetExpiredBody": "Reset links work once and last 30 minutes. Ask for a new one."
+    "resetExpiredBody": "Reset links work once and last 30 minutes. Ask for a new one.",
+    "createDifferentAccount": "Create a different account"
   },
   "nav": {
     "home": "Home",

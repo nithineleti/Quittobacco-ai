@@ -16,6 +16,7 @@ import type { Language } from "@/data/types";
 import {
   signIn,
   signOut,
+  signOutAndSignUp,
   signUp,
   updateLanguage,
   type AuthState,
@@ -49,7 +50,9 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
     if (account) void updateLanguage(code);
   };
 
-  const [mode, setMode] = useState<Mode>("signin");
+  // ?mode=signup is set by "create a different account" on the signed-in card.
+  const wantsSignUp = params.get("mode") === "signup";
+  const [mode, setMode] = useState<Mode>(wantsSignUp ? "signup" : "signin");
   const [showPassword, setShowPassword] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -73,6 +76,14 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   // address they typed still in the box, rather than making them start over.
   // Adjusted during render (React's documented pattern for reacting to changed
   // input) rather than in an effect, which would cause a cascading re-render.
+  // Same-route navigation (signed-in card -> ?mode=signup) does not remount
+  // this component, so the initialiser above never re-runs. Adjust on change.
+  const [lastWantsSignUp, setLastWantsSignUp] = useState(wantsSignUp);
+  if (wantsSignUp !== lastWantsSignUp) {
+    setLastWantsSignUp(wantsSignUp);
+    if (wantsSignUp) setMode("signup");
+  }
+
   const switched = upState.switchToSignIn ?? false;
   const [lastSwitched, setLastSwitched] = useState(false);
   const [switchNotice, setSwitchNotice] = useState<string | null>(null);
@@ -172,6 +183,17 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
             <Button type="submit" variant="secondary" full>
               {t("auth.signOut")}
             </Button>
+          </form>
+
+          {/* Without this there is no way to reach the sign-up form while
+              signed in — which matters on a phone shared by a family. */}
+          <form action={signOutAndSignUp}>
+            <button
+              type="submit"
+              className="min-h-11 w-full text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {t("auth.createDifferentAccount")}
+            </button>
           </form>
         </Card>
       ) : (
