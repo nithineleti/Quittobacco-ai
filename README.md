@@ -57,9 +57,9 @@ SESSION_SECRET=…
 # without it rather than silently not sending. https://resend.com (free tier)
 RESEND_API_KEY=re_…
 MAIL_FROM="QuitTobacco <noreply@yourdomain.com>"
-# Absolute base URL used to build reset links. Netlify sets URL automatically;
-# set APP_URL if you use a custom domain.
-APP_URL=https://your-site.netlify.app
+# Absolute base URL used to build reset links. Netlify sets URL and Vercel sets
+# VERCEL_PROJECT_PRODUCTION_URL automatically; set APP_URL for a custom domain.
+APP_URL=https://your-site.vercel.app
 # Operator access to /backend. Comma-separated, lowercase. Exists so the FIRST
 # operator can get in on a fresh deploy; after that prefer the database flag:
 #   UPDATE users SET is_admin = true WHERE email = 'you@example.com';
