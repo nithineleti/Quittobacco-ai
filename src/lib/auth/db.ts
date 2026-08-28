@@ -193,6 +193,35 @@ async function query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
   return result.rows as T[];
 }
 
+/**
+ * Connectivity probe for the health endpoint. Returns which variable supplied
+ * the connection string — the NAME only, never the value — and whether a
+ * trivial query succeeds.
+ */
+export async function checkDatabase(): Promise<{
+  ok: boolean;
+  variable?: string;
+  error?: string;
+  hint?: string;
+}> {
+  const variable = CONNECTION_VARS.find((n) => process.env[n]);
+  if (!variable) {
+    return {
+      ok: false,
+      error: "no connection string",
+      hint: `Set one of: ${CONNECTION_VARS.join(", ")}. On Vercel: Storage -> Create Database -> Neon.`,
+    };
+  }
+  try {
+    await query("SELECT 1");
+    return { ok: true, variable };
+  } catch (err) {
+    // The message can contain the host, so keep it short and never echo the URL.
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, variable, error: message.slice(0, 120) };
+  }
+}
+
 export interface UserRow {
   id: string;
   email: string;

@@ -88,6 +88,21 @@ It does not show passwords, because none are stored: each is a one-way scrypt
 hash with a per-user salt. There is no plaintext to reveal to anyone, operator
 included. Users who forget theirs use the reset flow.
 
+### Deployment self-check
+
+`GET /api/health` reports whether the deployment is actually configured:
+
+```json
+{ "ready": false,
+  "checks": { "database": { "ok": false, "error": "no connection string" },
+              "sessionSecret": { "ok": false, "hint": "openssl rand -base64 32" } } }
+```
+
+200 when sign-in will work, 503 when it won't. It reports presence and
+reachability only — never a secret's value, and never the connection string.
+Without it a misconfigured deploy is indistinguishable from a broken one,
+because every page just renders the error boundary.
+
 ### Security
 
 - **Passwords** — scrypt (`node:crypto`), 16-byte salt per user, constant-time compare.
