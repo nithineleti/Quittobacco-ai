@@ -96,6 +96,7 @@ function snapshot(): PersistedState {
     videos: s.videos,
     scanDisclaimerAck: s.scanDisclaimerAck,
     scans: s.scans,
+    loginDays: s.loginDays,
     savedAt: s.savedAt,
   };
 }

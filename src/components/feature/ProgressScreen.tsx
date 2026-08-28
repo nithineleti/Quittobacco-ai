@@ -25,6 +25,7 @@ import {
   savingsGoalPercent,
 } from "@/lib/health";
 import { BADGE_TIERS, tierIndex } from "@/lib/scoring";
+import { LoginCalendar } from "@/components/feature/LoginCalendar";
 import { shareStreakCard } from "@/lib/shareCard";
 import {
   badgeInfo,
@@ -152,6 +153,9 @@ export function ProgressScreen() {
             <Card><Stat value={total} label={t("progress.totalDays")} /></Card>
             <Card><Stat value={formatINR(saved)} label={t("progress.moneySaved")} /></Card>
           </div>
+
+          {/* The days that actually earn rewards. */}
+          <LoginCalendar />
 
           <Card className="flex flex-col gap-3">
             <div className="flex items-center justify-between">

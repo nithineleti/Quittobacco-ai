@@ -21,7 +21,11 @@ export function StateSync() {
     // over a good server copy on every cold load.
     if (!hydrated) return;
 
-    void ensureSync();
+    // Mark today as a day the user actually showed up. Idempotent per date, and
+    // it runs after the restore so a day recorded on another device isn't
+    // double-counted. This is what earns rewards — see activeDaysSinceQuit.
+    void ensureSync().then(() => useStore.getState().recordLoginDay());
+
     const unsubscribe = useStore.subscribe(schedulePush);
 
     document.addEventListener("visibilitychange", flushPush);

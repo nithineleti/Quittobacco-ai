@@ -51,6 +51,12 @@ export interface PersistedState {
   videos: Record<string, VideoProgress>;
   scanDisclaimerAck: boolean;
   scans: ScanRecord[];
+  /**
+   * Distinct ISO dates on which the user actually opened the app while signed
+   * in. Rewards are earned from these, not from elapsed calendar time — see
+   * `activeDaysSinceQuit`.
+   */
+  loginDays: string[];
   savedAt?: string;
 }
 
@@ -68,6 +74,8 @@ interface Actions {
   setSavingsGoal: (goal: number) => void;
   saveProgress: (name?: string) => void;
   linkAccount: (name?: string) => void;
+  /** Marks today as a day the user showed up. Idempotent per date. */
+  recordLoginDay: (date?: string) => void;
   /** Replaces the whole journey with a copy restored from the account. */
   adoptServerState: (incoming: Partial<PersistedState>) => void;
   resetAll: () => void;
@@ -100,6 +108,7 @@ const initial: PersistedState = {
   videos: {},
   scanDisclaimerAck: false,
   scans: [],
+  loginDays: [],
 };
 
 export const useStore = create<Store>()(
@@ -180,6 +189,13 @@ export const useStore = create<Store>()(
       saveProgress: (name) =>
         set({ isGuest: false, displayName: name, savedAt: toISODate(new Date()) }),
 
+      recordLoginDay: (date) =>
+        set((s) => {
+          const today = date ?? toISODate(new Date());
+          if (s.loginDays.includes(today)) return s; // already counted
+          return { loginDays: [...s.loginDays, today].sort() };
+        }),
+
       // Seeds device state from the signed-in account. Never overwrites a name
       // the user set on this device — the local value is the more deliberate one.
       linkAccount: (name) =>
@@ -217,6 +233,7 @@ export const useStore = create<Store>()(
         videos: s.videos,
         scanDisclaimerAck: s.scanDisclaimerAck,
         scans: s.scans,
+        loginDays: s.loginDays,
         savedAt: s.savedAt,
       }),
     },

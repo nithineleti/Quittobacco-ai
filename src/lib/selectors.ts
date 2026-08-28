@@ -2,6 +2,7 @@
  * Derived reads over the store. Components call these instead of doing domain
  * math inline (§9): the store holds source data, the pure libs compute meaning.
  */
+import { addDays, daysBetween, parseLocalDate, toISODate } from "@/lib/format";
 import {
   currentStreakDays,
   moneySaved,
@@ -60,9 +61,35 @@ export function badgeInfo(
   return currentBadge(starting, badgeProgress(s, now));
 }
 
+/**
+ * Days the user actually showed up for, counted from the start of the current
+ * streak (the quit date, or the day after the most recent slip).
+ *
+ * This — not elapsed calendar time — is what earns rewards. Time alone would
+ * let someone set a quit date three months back at sign-up and unlock the whole
+ * ladder without ever opening the app again.
+ */
+export function activeDaysSinceQuit(s: Store, now: Date = new Date()): number {
+  if (!s.quitDate) return 0;
+
+  const past = slipDates(s).filter((d) => daysBetween(d, now) >= 0);
+  const lastSlip = past.sort().at(-1);
+  // A slip restarts the count from the following day.
+  const start = lastSlip ? addDays(lastSlip, 1) : parseLocalDate(s.quitDate);
+  const startISO = toISODate(start);
+  const todayISO = toISODate(now);
+
+  return new Set(
+    s.loginDays.filter((d) => d >= startISO && d <= todayISO),
+  ).size;
+}
+
 export function rewardContext(s: Store, now: Date = new Date()): RewardContext {
   return {
-    streakDays: streakDays(s, now),
+    // Deliberately the ACTIVE-day count, not streakDays. The recovery timeline
+    // still uses real elapsed time — nicotine leaves the body on its own
+    // schedule — but a reward has to be turned up for.
+    streakDays: activeDaysSinceQuit(s, now),
     totalCheckIns: distinctCheckInDays(s),
     scanDays: scanDayIndices(s),
     claimedIds: Object.keys(s.claimed),

@@ -269,7 +269,8 @@
         "title": "Full dental exam + Diamond",
         "detail": "A full exam, Diamond tier, and a 1-year certificate."
       }
-    }
+    },
+    "activeDaysNote": "Rewards count the days you actually open the app, not days on the calendar."
   },
   "checkin": {
     "title": "Today's check-in",
@@ -487,5 +488,29 @@
     "getApp": "Start your own journey",
     "shareLinkText": "Follow my quit journey and cheer me on 🌱",
     "someone": "Someone"
+  },
+  "calendar": {
+    "title": "Your login calendar",
+    "activeThisMonth_one": "{{count}} active day this month",
+    "activeThisMonth_other": "{{count}} active days this month",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "checkedIn": "checked in",
+    "weekdays": [
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
+    ],
+    "state": {
+      "login": "Opened the app",
+      "missed": "Not opened",
+      "slip": "Slip logged",
+      "future": "Upcoming",
+      "blank": ""
+    }
   }
 }

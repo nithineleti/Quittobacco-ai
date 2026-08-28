@@ -95,7 +95,14 @@ export function RewardsScreen() {
       </div>
 
       {tab === "ladder" ? (
-        <ol className="flex flex-col gap-3">
+        <>
+          {/* Without this, "90 days tobacco-free" beside a locked 7-day reward
+              reads as a bug rather than a rule. */}
+          <p className="flex items-start gap-2 rounded-card bg-surface-2 px-4 py-3 text-sm text-muted">
+            <Icon name="Info" className="mt-0.5 size-4 shrink-0" />
+            {t("rewards.activeDaysNote")}
+          </p>
+          <ol className="flex flex-col gap-3">
           {ladder.map(({ rung, status }) => (
             <li key={rung.id}>
               <Card
@@ -162,7 +169,8 @@ export function RewardsScreen() {
               </Card>
             </li>
           ))}
-        </ol>
+          </ol>
+        </>
       ) : claimedRungs.length === 0 ? (
         <EmptyState
           icon={<Icon name="Gift" className="size-8" />}

@@ -183,6 +183,20 @@ scoped out; "share your progress" ships as a WhatsApp/Web-Share snapshot instead
 
 ---
 
+## Rewards are earned by showing up
+
+`loginDays` records each distinct date the user actually opens the app while
+signed in. `activeDaysSinceQuit` counts those from the start of the current
+streak (the quit date, or the day after the most recent slip), and **that** is
+what the reward ladder gates on.
+
+Elapsed time alone would let someone backdate their quit date at sign-up and
+unlock the whole ladder without ever returning. The recovery timeline still uses
+real elapsed days — nicotine leaves the body on its own schedule — so the two
+numbers differ on purpose, and the rewards screen says so.
+
+Progress → Overview shows the login calendar these days come from.
+
 ## Password reset
 
 `/login → Forgot your password?` → `/forgot` → e-mailed link → `/reset`.
