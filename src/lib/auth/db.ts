@@ -13,7 +13,36 @@ import { Pool } from "pg";
  * server in development.
  */
 
-const connectionString = process.env.DATABASE_URL;
+/**
+ * Connection string, accepting whatever name the host injects.
+ *
+ * Vercel Marketplace databases (Neon, Supabase, Prisma Postgres) are wired up
+ * automatically, but each provider names the variable differently — Neon sets
+ * DATABASE_URL, Supabase and others use POSTGRES_URL. Reading several avoids a
+ * deploy that builds fine and then 500s because the variable was spelled the
+ * other way.
+ *
+ * Pooled URLs come first: serverless functions open and drop connections
+ * constantly, and an unpooled endpoint exhausts the database's slots.
+ */
+const CONNECTION_VARS = [
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "DATABASE_POSTGRES_URL",
+  "POSTGRES_URL_NON_POOLING",
+  "DATABASE_URL_UNPOOLED",
+] as const;
+
+function resolveConnectionString(): string | undefined {
+  for (const name of CONNECTION_VARS) {
+    const value = process.env[name];
+    if (value) return value;
+  }
+  return undefined;
+}
+
+const connectionString = resolveConnectionString();
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]"]);
 
@@ -39,9 +68,10 @@ function wantsSsl(url: string): boolean {
 function createPool(): Pool {
   if (!connectionString) {
     throw new Error(
-      "DATABASE_URL is not set. Point it at your Postgres database — e.g. " +
-        "postgres://user:pass@host/db?sslmode=require (Netlify DB / Neon), or " +
-        "postgres://localhost:5432/quittobacco_dev for local development.",
+      `No Postgres connection string found. Set one of: ${CONNECTION_VARS.join(", ")}. ` +
+        "On Vercel, provisioning a Marketplace database (`vercel install neon`) " +
+        "injects this automatically. Locally: " +
+        "postgres://localhost:5432/quittobacco_dev",
     );
   }
 

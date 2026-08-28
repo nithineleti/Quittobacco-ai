@@ -47,6 +47,11 @@ state to onboarding or the dashboard.
 Two variables, in `.env.local` for development and in the Netlify UI for
 production. Neither is ever committed.
 
+On Vercel, `vercel install neon` provisions a database and injects the
+connection string automatically — providers name it differently, so the app
+accepts `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_PRISMA_URL` and the unpooled
+variants, preferring pooled ones.
+
 ```bash
 # Any Postgres. Locally:  createdb quittobacco_dev
 DATABASE_URL=postgres://localhost:5432/quittobacco_dev
