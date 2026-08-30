@@ -1,6 +1,10 @@
 "use server";
 
-import { loadUserState, saveUserState } from "@/lib/auth/db";
+import {
+  FOREIGN_KEY_VIOLATION,
+  loadUserState,
+  saveUserState,
+} from "@/lib/auth/db";
 import { readSession } from "@/lib/auth/session";
 
 /**
@@ -77,6 +81,13 @@ export async function pushUserState(
       updatedAt: new Date(res.updated_at).toISOString(),
     };
   } catch (err) {
+    // Foreign-key violation means the account row is gone (deleted, or the
+    // database was reset) while this browser still holds a valid cookie. That
+    // is a stale session, not a server fault — report it as such so the client
+    // stops retrying, and don't log a stack trace for an expected condition.
+    if ((err as { code?: string })?.code === FOREIGN_KEY_VIOLATION) {
+      return { ok: false, error: "unauthenticated" };
+    }
     console.error("pushUserState failed", err);
     return { ok: false, error: "failed" };
   }

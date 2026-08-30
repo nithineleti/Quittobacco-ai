@@ -88,6 +88,25 @@ It does not show passwords, because none are stored: each is a one-way scrypt
 hash with a per-user salt. There is no plaintext to reveal to anyone, operator
 included. Users who forget theirs use the reset flow.
 
+### Demo mode
+
+Two optional environment variables put the app into demo mode. Both are **off
+unless set**, so a normal deployment is unaffected.
+
+```bash
+# Send every sign-in through the questionnaire, so a demo always shows the
+# whole journey from the start. NEVER set this in production: a returning user
+# would be re-asked the intake questions, and completing them resets their quit
+# date, wiping the streak they have built.
+NEXT_PUBLIC_ALWAYS_ONBOARD=1
+
+# Print a demo credential card on the sign-in form, with a button that fills
+# the fields. NEVER set these in production — it publishes working credentials
+# on a public login page.
+NEXT_PUBLIC_DEMO_EMAIL=demo@example.com
+NEXT_PUBLIC_DEMO_PASSWORD=…
+```
+
 ### Deployment self-check
 
 `GET /api/health` reports whether the deployment is actually configured:

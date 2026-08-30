@@ -247,6 +247,8 @@ export interface AuthTokenRow {
 
 /** Postgres error code for a unique-constraint violation. */
 export const UNIQUE_VIOLATION = "23505";
+/** Raised when a row references a user that no longer exists. */
+export const FOREIGN_KEY_VIOLATION = "23503";
 
 /** True when `err` is a unique violation, optionally on a specific column. */
 export function isUniqueViolation(err: unknown, column?: string): boolean {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
@@ -38,6 +38,19 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   const next = params.get("next") ?? "";
 
   const hydrated = useHydrated();
+
+  /**
+   * Demo credentials, shown on the sign-in form so a client can get in without
+   * being handed a password separately.
+   *
+   * Gated on the env vars being present, so this card simply does not exist in
+   * a normal deployment — printing working credentials on a public login page
+   * would otherwise be an open door.
+   */
+  const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL;
+  const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
+  const showDemo = Boolean(demoEmail && demoPassword) && !account;
+
   const language = useStore((s) => s.language);
   const setLanguage = useStore((s) => s.setLanguage);
 
@@ -97,6 +110,17 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
       setSwitchNotice(upState.error ?? "auth.errors.emailTaken");
     }
   }
+
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /** Fills both fields; the visitor still taps Sign in, so they see what happens. */
+  const fillDemo = () => {
+    setMode("signin");
+    setPassword(demoPassword ?? "");
+    const form = formRef.current;
+    const email = form?.elements.namedItem("email");
+    if (email instanceof HTMLInputElement) email.value = demoEmail ?? "";
+  };
 
   const emailId = useId();
   const passwordId = useId();
@@ -244,6 +268,7 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
         )}
 
         <form
+          ref={formRef}
           action={mode === "signin" ? inAction : upAction}
           onSubmit={() => setSwitchNotice(null)}
           className="flex flex-col gap-4"
@@ -359,6 +384,20 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
               : t(mode === "signin" ? "auth.submitSignIn" : "auth.submitSignUp")}
           </Button>
         </form>
+
+        {showDemo && mode === "signin" && (
+          <div className="flex flex-col gap-2 rounded-card border border-dashed border-border bg-surface-2 p-4">
+            <p className="text-sm font-semibold text-fg">Demo account</p>
+            <p className="font-mono text-sm text-muted">
+              {demoEmail}
+              <br />
+              {demoPassword}
+            </p>
+            <Button variant="secondary" onClick={fillDemo} full>
+              Fill demo login
+            </Button>
+          </div>
+        )}
 
         {mode === "signin" && (
           <Link

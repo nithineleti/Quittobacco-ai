@@ -111,6 +111,10 @@ async function push(): Promise<void> {
   if (res.ok) {
     lastSent = body;
     writeMark(res.updatedAt ?? at);
+  } else if (res.error === "unauthenticated") {
+    // The account behind this cookie is gone. Stop pushing; the next navigation
+    // hits the DAL, which redirects to /login.
+    status = "idle";
   }
 }
 
