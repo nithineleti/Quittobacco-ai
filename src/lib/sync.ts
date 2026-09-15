@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { useStore, type PersistedState } from "@/lib/store";
-import { pullUserState, pushUserState } from "@/lib/auth/sync-actions";
+import { pullUserState, pushUserState } from "@/lib/syncProtocol";
 
 /**
  * Mirrors the quit journey between this device and the account.
@@ -15,9 +15,9 @@ import { pullUserState, pushUserState } from "@/lib/auth/sync-actions";
  * in the same window means the later save wins — acceptable for a single-user
  * journal, and far simpler than merging.
  *
- * Scan PHOTOS are never synced: they live in IndexedDB and are far too large.
- * Only each scan's score and answers travel, so a restored device shows the
- * history and trend without the images.
+ * Reports and images the clinic sends a patient are NOT part of this: they
+ * live only on the server (patient_documents) and are fetched on demand, so
+ * a lost phone never carried a copy.
  *
  * This lives in a module rather than a component because the entry gate at `/`
  * must AWAIT the first restore before deciding onboarding-vs-dashboard, while
@@ -94,8 +94,6 @@ function snapshot(): PersistedState {
     savingsGoal: s.savingsGoal,
     claimed: s.claimed,
     videos: s.videos,
-    scanDisclaimerAck: s.scanDisclaimerAck,
-    scans: s.scans,
     loginDays: s.loginDays,
     savedAt: s.savedAt,
   };
@@ -209,7 +207,7 @@ export async function flushNow(): Promise<void> {
  *
  * Clearing is safe precisely BECAUSE the journey is now backed up — it comes
  * straight back on the next sign-in. And it is necessary: this phone may be
- * shared, and the next person must not find someone else's streak, scans and
+ * shared, and the next person must not find someone else's streak, rewards and
  * name sitting there.
  */
 export async function signOutCleanup(): Promise<void> {

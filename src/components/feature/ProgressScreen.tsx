@@ -4,9 +4,10 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { Icon } from "@/components/Icon";
-import { GrowingPlant } from "@/components/feature/GrowingPlant";
+import { RecoveryRing } from "@/components/feature/RecoveryRing";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { IconTile } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Sheet } from "@/components/ui/Sheet";
@@ -30,6 +31,7 @@ import { shareStreakCard } from "@/lib/shareCard";
 import {
   badgeInfo,
   moneySavedTotal,
+  recovery,
   streakDays,
   todayISO,
   totalFreeDaysSel,
@@ -73,6 +75,7 @@ export function ProgressScreen() {
   const goal = s.savingsGoal ?? 500;
   const goalPct = savingsGoalPercent(saved, goal);
   const badge = badgeInfo(s, now);
+  const rec = recovery(s, now);
   const insight = computeTriggerInsight(s.checkIns);
   const milestones = reachedMilestones(total, RECOVERY_MILESTONES);
   const next = nextMilestone(total, RECOVERY_MILESTONES);
@@ -109,7 +112,7 @@ export function ProgressScreen() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("progress.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("progress.title")}</h1>
         <p className="text-sm text-muted">{t("progress.sub")}</p>
       </header>
 
@@ -132,16 +135,16 @@ export function ProgressScreen() {
 
       {tab === "overview" && (
         <>
-          <Card float className="flex items-center gap-4 bg-primary-soft">
-            <GrowingPlant days={total} className="h-24 w-20 shrink-0" label={t("progress.title")} />
+          <div className="flex items-center gap-4 rounded-card bg-brand-gradient p-5 shadow-float">
+            <RecoveryRing percent={rec} size={96} stroke={9} label={t("progress.recoveryTitle")} />
             <div className="min-w-0">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl font-semibold tabular-nums text-primary">{total}</span>
-                <span className="text-base text-fg">{t("progress.totalDays")}</span>
+                <span className="text-4xl font-bold tabular-nums">{total}</span>
+                <span className="text-base font-semibold">{t("progress.totalDays")}</span>
               </div>
-              <p className="mt-0.5 text-sm text-muted">{t("progress.sub")}</p>
+              <p className="mt-1 text-sm opacity-90">{t("progress.recoveryTitle")} · {rec}%</p>
             </div>
-          </Card>
+          </div>
 
           <Button variant="secondary" full onClick={shareProgress}>
             <Icon name="Share2" className="size-5" />
@@ -177,8 +180,8 @@ export function ProgressScreen() {
           </Card>
 
           <Card className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Icon name="Activity" className="size-5 text-primary" />
+            <div className="flex items-center gap-3">
+              <IconTile icon="Activity" hue="teal" size="sm" />
               <p className="text-base font-semibold text-fg">{t("progress.insightTitle")}</p>
             </div>
             {insight ? (
@@ -205,9 +208,7 @@ export function ProgressScreen() {
           )}
 
           <Card className="flex items-center gap-3">
-            <span className="grid size-11 shrink-0 place-items-center rounded-pill bg-surface-2 text-muted">
-              <Icon name="HeartPulse" className="size-6" />
-            </span>
+            <IconTile icon="HeartPulse" hue="rose" />
             <div className="min-w-0 flex-1">
               <p className="text-base font-semibold text-fg">{t("progress.slipTitle")}</p>
               <p className="text-sm text-muted">{t("progress.slipBody")}</p>
@@ -257,12 +258,6 @@ export function ProgressScreen() {
                     {t("badge.needDays", { count: badge.next.need.days })}
                   </li>
                 )}
-                {badge.next.need.scans > 0 && (
-                  <li className="flex items-center gap-2 text-base text-fg">
-                    <Icon name="ChevronRight" className="size-4 text-primary" />
-                    {t("badge.needScans", { count: badge.next.need.scans })}
-                  </li>
-                )}
                 {badge.next.need.videos > 0 && (
                   <li className="flex items-center gap-2 text-base text-fg">
                     <Icon name="ChevronRight" className="size-4 text-primary" />
@@ -279,9 +274,7 @@ export function ProgressScreen() {
         <>
           {next && (
             <Card className="flex items-center gap-4 bg-primary-soft">
-              <span className="grid size-12 place-items-center rounded-pill bg-primary text-primary-fg">
-                <Icon name="HeartPulse" className="size-6" />
-              </span>
+              <IconTile icon="HeartPulse" hue="rose" size="lg" />
               <div>
                 <p className="text-sm text-muted">{t("progress.nextMilestone", { benefit: loc(next.benefitL, lang) })}</p>
                 <p className="text-base font-semibold text-fg">{t("progress.inDays", { count: next.daysRemaining })}</p>

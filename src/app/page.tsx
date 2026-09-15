@@ -19,13 +19,7 @@ export default function Home() {
     // would send someone signing in on a NEW phone through onboarding again,
     // moments before their real journey arrives from the server.
     if (!hydrated || syncStatus !== "done") return;
-
-    // Demo mode: send every sign-in through the questionnaire, so each run
-    // shows the whole journey from the start. Off by default — a real user
-    // returning to a 40-day streak must land on their dashboard, not be asked
-    // the twelve intake questions again.
-    const alwaysOnboard = process.env.NEXT_PUBLIC_ALWAYS_ONBOARD === "1";
-    router.replace(alwaysOnboard || !hasOnboarded ? "/onboarding" : "/dashboard");
+    router.replace(hasOnboarded ? "/dashboard" : "/onboarding");
   }, [hydrated, syncStatus, hasOnboarded, router]);
 
   return (

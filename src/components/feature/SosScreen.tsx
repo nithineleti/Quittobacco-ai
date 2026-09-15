@@ -12,7 +12,8 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { QUITLINE } from "@/data/contact";
 import { RESCUE_MESSAGES, URGE_SURF_SECONDS } from "@/data/sos";
 import { loc } from "@/data/types";
-import { useStore } from "@/lib/store";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useHydrated, useStore } from "@/lib/store";
 
 type Phase = "surf" | "done" | "breathe";
 
@@ -22,6 +23,7 @@ export function SosScreen() {
   const sp = useSearchParams();
 
   const [phase, setPhase] = useState<Phase>(sp.get("tool") === "breathe" ? "breathe" : "surf");
+  const hydrated = useHydrated();
   const [left, setLeft] = useState(URGE_SURF_SECONDS);
   const [paused, setPaused] = useState(false);
   const leftRef = useRef(URGE_SURF_SECONDS);
@@ -41,6 +43,18 @@ export function SosScreen() {
     }, 1000);
     return () => clearInterval(id);
   }, [phase, paused]);
+
+  // The chosen language lives in localStorage, so the server always renders
+  // English. Painting before the store rehydrates is a hydration mismatch —
+  // the same guard every other screen uses.
+  if (!hydrated) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-2">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="size-48 rounded-pill" />
+      </div>
+    );
+  }
 
   if (phase === "breathe") {
     return (
@@ -66,8 +80,8 @@ export function SosScreen() {
     return (
       <div className="animate-fade-in flex flex-col gap-6 py-2">
         <div className="flex flex-col items-center gap-3 text-center">
-          <span className="grid size-16 place-items-center rounded-pill bg-success-soft text-success">
-            <Icon name="CheckCircle2" className="size-8" />
+          <span className="grid size-20 place-items-center rounded-card bg-tile-emerald text-tile-emerald-fg">
+            <Icon name="PartyPopper" className="size-10" />
           </span>
           <h1 className="text-2xl font-semibold text-fg">{t("sos.madeItTitle")}</h1>
           <p className="max-w-xs text-base text-muted">{t("sos.madeItBody")}</p>
@@ -83,7 +97,7 @@ export function SosScreen() {
           href={`tel:${QUITLINE.tel}`}
           className="flex items-center gap-3 rounded-card border border-border bg-card p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span className="grid size-11 place-items-center rounded-pill bg-primary-soft text-primary">
+          <span className="grid size-11 place-items-center rounded-tile bg-tile-rose text-tile-rose-fg">
             <Icon name="Phone" className="size-5" />
           </span>
           <div className="flex-1">

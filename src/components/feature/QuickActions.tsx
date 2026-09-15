@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 import { useStore } from "@/lib/store";
 
 const ACCENT: Record<string, string> = {
-  primary: "bg-primary text-primary-fg",
+  primary: "bg-brand-gradient",
   gold: "bg-gold-fill text-gold-fg",
   success: "bg-success text-success-fg",
   surface: "bg-card border border-border text-fg",

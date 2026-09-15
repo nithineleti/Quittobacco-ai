@@ -8,6 +8,7 @@ import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Field";
+import { IconTile, type TileHue } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -21,7 +22,14 @@ import { shareText } from "@/lib/share";
 import { badgeInfo, moneySavedTotal, streakDays } from "@/lib/selectors";
 import { useHydrated, useStore } from "@/lib/store";
 
-export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
+export function ProfileScreen({
+  patientCode,
+  isAdmin = false,
+}: {
+  /** "QT-000042" — the id a clinician looks up in the admin panel. */
+  patientCode: string;
+  isAdmin?: boolean;
+}) {
   const hydrated = useHydrated();
   const { t } = useTranslation();
   const router = useRouter();
@@ -35,6 +43,7 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
   const [clearOpen, setClearOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!hydrated) {
     return (
@@ -52,6 +61,16 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
   const badge = badgeInfo(s, new Date());
   const meta = BADGE_META[badge.tier];
   const streak = streakDays(s, new Date());
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(patientCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard blocked (http on a LAN phone) — the code is still visible to read out.
+    }
+  };
 
   const exportData = () => {
     const raw = localStorage.getItem("qt-storage") ?? "{}";
@@ -93,16 +112,16 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("profile.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("profile.title")}</h1>
       </header>
 
       <Card className="flex items-center gap-4">
-        <span className="grid size-14 place-items-center rounded-pill bg-gold-fill text-gold-fg">
+        <span className="grid size-14 shrink-0 place-items-center rounded-tile bg-gold-fill text-gold-fg">
           <Icon name={meta.icon} className="size-7" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="truncate text-lg font-semibold text-fg">
+            <p className="truncate text-lg font-bold text-fg">
               {s.displayName ?? t("dashboard.friend")}
             </p>
             {s.isGuest && <Pill tone="neutral">{t("profile.guestTag")}</Pill>}
@@ -113,10 +132,27 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
         </div>
       </Card>
 
+      {/* The Patient ID: what a clinician types to find this person and send
+          them a report. Big and copyable, because it is read across a desk. */}
+      <Card className="flex flex-col gap-3 bg-tile-violet">
+        <div className="flex items-center gap-3">
+          <IconTile icon="IdCard" hue="violet" className="bg-card" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-tile-violet-fg">{t("profile.patientId")}</p>
+            <p className="font-mono text-2xl font-bold tracking-wider text-fg">{patientCode}</p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={copyCode} aria-live="polite">
+            <Icon name={copied ? "Check" : "Copy"} className="size-4" />
+            {copied ? t("profile.copied") : t("profile.copy")}
+          </Button>
+        </div>
+        <p className="text-sm text-muted">{t("profile.patientIdHelp")}</p>
+      </Card>
+
       {s.isGuest && (
         <Card className="flex flex-col gap-3 bg-primary-soft">
           <div>
-            <p className="text-base font-semibold text-fg">{t("profile.saveTitle")}</p>
+            <p className="text-base font-bold text-fg">{t("profile.saveTitle")}</p>
             <p className="text-sm text-muted">{t("profile.saveBody")}</p>
           </div>
           <Button size="lg" full onClick={() => setSaveOpen(true)}>
@@ -134,7 +170,7 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
           aria-controls="language-options"
           className="flex min-h-14 w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          <Icon name="Globe" className="size-5 text-muted" />
+          <IconTile icon="Globe" hue="sky" size="sm" />
           <span className="flex-1 text-base font-semibold text-fg">
             {t("profile.language")}
           </span>
@@ -172,7 +208,7 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
                     setLangOpen(false);
                   }}
                   className={cn(
-                    "flex min-h-14 items-center gap-3 pl-12 pr-4 text-left text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                    "flex min-h-14 items-center gap-3 pl-16 pr-4 text-left text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     active
                       ? "bg-primary-soft font-semibold text-primary"
                       : "text-fg hover:bg-surface-2",
@@ -189,34 +225,18 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
 
       {/* Actions */}
       <Card className="flex flex-col divide-y divide-border p-0">
-        <ProfileRow icon="Users" label={t("profile.supporter")} onClick={doShare} />
-        <ProfileRow icon="Download" label={t("profile.export")} onClick={exportData} />
-        <Link
-          href="/help"
-          className="flex min-h-14 items-center gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        >
-          <Icon name="LifeBuoy" className="size-5 text-muted" />
-          <span className="flex-1 text-base text-fg">{t("profile.help")}</span>
-          <Icon name="ChevronRight" className="size-5 text-muted" />
-        </Link>
+        <ProfileLink href="/reports" icon="FileText" hue="sky" label={t("profile.reports")} />
+        <ProfileRow icon="Users" hue="pink" label={t("profile.supporter")} onClick={doShare} />
+        <ProfileRow icon="Download" hue="violet" label={t("profile.export")} onClick={exportData} />
+        <ProfileLink href="/help" icon="LifeBuoy" hue="rose" label={t("profile.help")} />
         {isAdmin && (
-          <Link
+          <ProfileLink
             href="/backend"
-            className="flex min-h-14 items-center gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-          >
-            <Icon name="Activity" className="size-5 text-muted" />
-            <span className="flex-1 text-base text-fg">Backend dashboard</span>
-            <Icon name="ChevronRight" className="size-5 text-muted" />
-          </Link>
+            icon="ShieldCheck"
+            hue="amber"
+            label={t("profile.adminPanel")}
+          />
         )}
-        <Link
-          href="/admin"
-          className="flex min-h-14 items-center gap-3 px-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-        >
-          <Icon name="Stethoscope" className="size-5 text-muted" />
-          <span className="flex-1 text-base text-fg">{t("admin.title")}</span>
-          <Icon name="ChevronRight" className="size-5 text-muted" />
-        </Link>
       </Card>
 
       {/* Privacy */}
@@ -297,7 +317,7 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
           <form
             action={async () => {
               // Wipe this device too, so deleting the account doesn't leave the
-              // previous user's streak and scans behind on a shared phone.
+              // previous user's streak and rewards behind on a shared phone.
               resetAll();
               resetSync();
               await deleteAccount();
@@ -316,24 +336,45 @@ export function ProfileScreen({ isAdmin = false }: { isAdmin?: boolean }) {
   );
 }
 
+const rowClasses =
+  "flex min-h-14 w-full items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
+
 function ProfileRow({
   icon,
+  hue,
   label,
   onClick,
 }: {
   icon: string;
+  hue: TileHue;
   label: string;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex min-h-14 items-center gap-3 px-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-    >
-      <Icon name={icon} className="size-5 text-muted" />
+    <button type="button" onClick={onClick} className={rowClasses}>
+      <IconTile icon={icon} hue={hue} size="sm" />
       <span className="flex-1 text-base text-fg">{label}</span>
       <Icon name="ChevronRight" className="size-5 text-muted" />
     </button>
+  );
+}
+
+function ProfileLink({
+  href,
+  icon,
+  hue,
+  label,
+}: {
+  href: string;
+  icon: string;
+  hue: TileHue;
+  label: string;
+}) {
+  return (
+    <Link href={href} className={rowClasses}>
+      <IconTile icon={icon} hue={hue} size="sm" />
+      <span className="flex-1 text-base text-fg">{label}</span>
+      <Icon name="ChevronRight" className="size-5 text-muted" />
+    </Link>
   );
 }

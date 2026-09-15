@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Icon } from "@/components/Icon";
 import { ReadAloud } from "@/components/feature/ReadAloud";
 import { VideoPlayer } from "@/components/feature/VideoPlayer";
-import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { IconTile, type TileHue } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -15,6 +14,12 @@ import { CONTENT, CONTENT_CATEGORIES, type ContentItem } from "@/data/content";
 import { loc } from "@/data/types";
 import { cn } from "@/lib/cn";
 import { useHydrated, useStore } from "@/lib/store";
+
+/** Videos and articles get different hues so the list scans at a glance. */
+const TYPE_HUE: Record<ContentItem["type"], TileHue> = {
+  video: "pink",
+  article: "violet",
+};
 
 export function LearnScreen() {
   const hydrated = useHydrated();
@@ -50,9 +55,12 @@ export function LearnScreen() {
           {t("learn.backToLearn")}
         </button>
 
-        <div>
-          <h1 className="text-2xl font-semibold text-fg">{loc(selected.title, lang)}</h1>
-          <p className="mt-1 text-base text-muted">{loc(selected.summary, lang)}</p>
+        <div className="flex items-start gap-3">
+          <IconTile icon={selected.icon} hue={TYPE_HUE[selected.type]} size="lg" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-fg">{loc(selected.title, lang)}</h1>
+            <p className="mt-1 text-base text-muted">{loc(selected.summary, lang)}</p>
+          </div>
         </div>
 
         {selected.type === "video" ? (
@@ -69,8 +77,6 @@ export function LearnScreen() {
             </div>
           </>
         )}
-
-        <AssessPrompt />
       </article>
     );
   }
@@ -80,16 +86,16 @@ export function LearnScreen() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("learn.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("learn.title")}</h1>
         <p className="text-sm text-muted">{t("learn.subtitle")}</p>
       </header>
 
-      <Card className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <p className="text-base font-semibold text-fg">
+      <Card className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          <IconTile icon="PlayCircle" hue="pink" size="sm" />
+          <p className="flex-1 text-base font-semibold text-fg">
             {t("learn.videosDone", { done: videosDone, total: videoItems.length })}
           </p>
-          <Icon name="PlayCircle" className="size-5 text-primary" />
         </div>
         <ProgressBar
           value={(videosDone / videoItems.length) * 100}
@@ -109,9 +115,9 @@ export function LearnScreen() {
             aria-pressed={cat === c.id}
             onClick={() => setCat(c.id)}
             className={cn(
-              "min-h-10 shrink-0 rounded-pill border px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "min-h-10 shrink-0 rounded-pill border px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               cat === c.id
-                ? "border-primary bg-primary-soft text-primary"
+                ? "border-primary bg-primary text-primary-fg"
                 : "border-border bg-card text-muted hover:bg-surface-2",
             )}
           >
@@ -131,9 +137,7 @@ export function LearnScreen() {
                 className="w-full rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Card className="flex items-center gap-4 text-left">
-                  <span className="grid size-12 shrink-0 place-items-center rounded-pill bg-primary-soft text-primary">
-                    <Icon name={item.icon} className="size-6" />
-                  </span>
+                  <IconTile icon={item.icon} hue={TYPE_HUE[item.type]} size="lg" />
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-semibold text-fg">{loc(item.title, lang)}</p>
                     <p className="text-sm text-muted">{loc(item.summary, lang)}</p>
@@ -161,28 +165,6 @@ export function LearnScreen() {
           );
         })}
       </ul>
-
-      <AssessPrompt />
     </div>
-  );
-}
-
-function AssessPrompt() {
-  const { t } = useTranslation();
-  return (
-    <Card className="flex flex-col gap-3 bg-primary-soft">
-      <div className="flex items-center gap-3">
-        <span className="grid size-11 place-items-center rounded-pill bg-primary text-primary-fg">
-          <Icon name="ScanLine" className="size-6" />
-        </span>
-        <div>
-          <p className="text-base font-semibold text-fg">{t("learn.assessPrompt")}</p>
-          <p className="text-sm text-muted">{t("learn.assessSub")}</p>
-        </div>
-      </div>
-      <Link href="/assess" className={buttonClasses({ full: true })}>
-        {t("learn.goToAssess")}
-      </Link>
-    </Card>
   );
 }

@@ -141,27 +141,23 @@ describe("badge tiers", () => {
   it("earns the higher of starting tier and activity, with the right next step", () => {
     const { tier, next } = currentBadge("bronze", {
       daysFree: 7,
-      scansCompleted: 1,
       videosCompleted: 2,
     });
     expect(tier).toBe("silver");
     expect(next?.tier).toBe("gold");
-    expect(next?.need).toEqual({ days: 23, scans: 1, videos: 2 });
+    expect(next?.need).toEqual({ days: 23, videos: 2 });
   });
 
   it("keeps the form's starting tier if activity hasn't caught up", () => {
     const { tier } = currentBadge("gold", {
       daysFree: 3,
-      scansCompleted: 0,
       videosCompleted: 0,
     });
     expect(tier).toBe("gold");
   });
 
   it("returns no next tier at diamond", () => {
-    expect(
-      nextBadge("diamond", { daysFree: 400, scansCompleted: 9, videosCompleted: 9 }),
-    ).toBeNull();
+    expect(nextBadge("diamond", { daysFree: 400, videosCompleted: 9 })).toBeNull();
   });
 });
 

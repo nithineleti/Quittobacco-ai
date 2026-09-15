@@ -175,31 +175,29 @@ export function startingBadgeTier(readiness: number, ftnd: number): BadgeTier {
 
 export interface BadgeProgress {
   daysFree: number;
-  scansCompleted: number;
   videosCompleted: number;
 }
 
 interface TierRequirement {
   tier: BadgeTier;
   days: number;
-  scans: number;
   videos: number;
 }
 
 /** Requirements to reach each tier through real activity (§3.1). */
 export const TIER_REQUIREMENTS: TierRequirement[] = [
-  { tier: "bronze", days: 1, scans: 0, videos: 0 },
-  { tier: "silver", days: 7, scans: 1, videos: 2 },
-  { tier: "gold", days: 30, scans: 2, videos: 4 },
-  { tier: "platinum", days: 180, scans: 4, videos: 6 },
-  { tier: "diamond", days: 365, scans: 8, videos: 8 },
+  { tier: "bronze", days: 1, videos: 0 },
+  { tier: "silver", days: 7, videos: 2 },
+  { tier: "gold", days: 30, videos: 4 },
+  { tier: "platinum", days: 180, videos: 6 },
+  { tier: "diamond", days: 365, videos: 8 },
 ];
 
 function tierFromProgress(p: BadgeProgress): BadgeTier {
   let earned: BadgeTier = "bronze";
   let any = false;
   for (const r of TIER_REQUIREMENTS) {
-    if (p.daysFree >= r.days && p.scansCompleted >= r.scans && p.videosCompleted >= r.videos) {
+    if (p.daysFree >= r.days && p.videosCompleted >= r.videos) {
       earned = r.tier;
       any = true;
     }
@@ -210,7 +208,7 @@ function tierFromProgress(p: BadgeProgress): BadgeTier {
 
 export interface NextTier {
   tier: BadgeTier;
-  need: { days: number; scans: number; videos: number };
+  need: { days: number; videos: number };
 }
 
 /** The tier above `current` and exactly what's still required to reach it. */
@@ -222,7 +220,6 @@ export function nextBadge(current: BadgeTier, p: BadgeProgress): NextTier | null
     tier: req.tier,
     need: {
       days: Math.max(0, req.days - p.daysFree),
-      scans: Math.max(0, req.scans - p.scansCompleted),
       videos: Math.max(0, req.videos - p.videosCompleted),
     },
   };

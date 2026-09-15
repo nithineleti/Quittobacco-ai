@@ -1,4 +1,5 @@
 import { checkDatabase } from "@/lib/auth/db";
+import { isSmsConfigured } from "@/lib/auth/sms";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function GET() {
   );
   const sessionSecret = isProd ? hasSecretVar : true;
   const mail = Boolean(process.env.RESEND_API_KEY);
+  const sms = isSmsConfigured();
   const admins = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .filter((e) => e.trim()).length;
@@ -47,6 +49,12 @@ export async function GET() {
       mail: {
         ok: mail,
         hint: mail ? undefined : "Set RESEND_API_KEY to enable password reset",
+      },
+      sms: {
+        ok: sms,
+        hint: sms
+          ? undefined
+          : "Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM to enable mobile OTP sign-in",
       },
       adminEmails: { ok: admins > 0, count: admins },
     },

@@ -17,7 +17,10 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-card border border-border bg-card",
+        // A whisper of shadow instead of a hard border: cards read as raised
+        // paper on the tinted page, which is what makes the layout feel
+        // "app-like" rather than "form-like".
+        "rounded-card border border-border/60 bg-card shadow-card",
         padded && "p-5",
         float && "shadow-float",
         className,

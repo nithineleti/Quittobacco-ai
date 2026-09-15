@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { Icon } from "@/components/Icon";
 import { Card } from "@/components/ui/Card";
+import { IconTile, type TileHue } from "@/components/ui/IconTile";
 import {
   QUITLINE,
   SUPPORT_EMAIL,
@@ -11,15 +12,26 @@ import {
 } from "@/data/contact";
 import { loc } from "@/data/types";
 import { cn } from "@/lib/cn";
-import { useStore } from "@/lib/store";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useHydrated, useStore } from "@/lib/store";
 
 export function HelpScreen() {
   const { t } = useTranslation();
+  const hydrated = useHydrated();
   const lang = useStore((s) => s.language);
 
-  const rows = [
+  const rows: {
+    icon: string;
+    hue: TileHue;
+    title: string;
+    note: string;
+    value: string;
+    href: string;
+    highlight: boolean;
+  }[] = [
     {
       icon: "Phone",
+      hue: "rose",
       title: loc(QUITLINE.name, lang),
       note: loc(QUITLINE.note, lang),
       value: QUITLINE.numberDisplay,
@@ -28,6 +40,7 @@ export function HelpScreen() {
     },
     {
       icon: "Mail",
+      hue: "sky",
       title: t("help.emailUs"),
       note: t("help.emailNote"),
       value: SUPPORT_EMAIL,
@@ -36,6 +49,7 @@ export function HelpScreen() {
     },
     {
       icon: "PhoneCall",
+      hue: "violet",
       title: t("help.callSupport"),
       note: t("help.phoneNote"),
       value: SUPPORT_PHONE_DISPLAY,
@@ -44,10 +58,19 @@ export function HelpScreen() {
     },
   ];
 
+  if (!hydrated) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("help.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("help.title")}</h1>
         <p className="text-sm text-muted">{t("help.sub")}</p>
       </header>
 
@@ -57,12 +80,10 @@ export function HelpScreen() {
           href={r.href}
           className="rounded-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Card className={cn("flex items-center gap-4", r.highlight && "bg-primary-soft")}>
-            <span className="grid size-12 shrink-0 place-items-center rounded-pill bg-primary text-primary-fg">
-              <Icon name={r.icon} className="size-6" />
-            </span>
+          <Card className={cn("flex items-center gap-4", r.highlight && "bg-tile-rose")}>
+            <IconTile icon={r.icon} hue={r.hue} size="lg" className={cn(r.highlight && "bg-card")} />
             <div className="min-w-0 flex-1">
-              <p className="text-base font-semibold text-fg">{r.title}</p>
+              <p className="text-base font-bold text-fg">{r.title}</p>
               <p className="text-sm text-muted">{r.note}</p>
               <p className="mt-0.5 text-base font-semibold text-primary">{r.value}</p>
             </div>

@@ -2,9 +2,11 @@
  * PURE reward-ladder logic — no React, no store. Unit-tested.
  *
  * Integrity (§3.6): high-value REAL rewards can't be unlocked by a self-reported
- * streak alone. They additionally require objective-ish evidence — a completed
- * oral scan at/after the milestone AND a consistent check-in history. Digital
- * rewards stay self-reported.
+ * streak alone. They additionally require a consistent check-in history — a
+ * person who has genuinely stayed off tobacco for 90 days has shown up in the
+ * app for most of them. The clinic then verifies in person: the admin panel
+ * shows every patient's journey, and a real reward is handed over at the
+ * clinic, never posted. Digital rewards stay self-reported.
  */
 import type { BadgeTier } from "@/lib/scoring";
 
@@ -21,8 +23,6 @@ export interface RewardRung {
   icon: string;
   /** If this rung also confers a badge tier. */
   badgeTier?: BadgeTier;
-  /** Real-reward gate: needs a scan on/after this many days free. */
-  requiresScanOnOrAfterDay?: number;
   /** Real-reward gate: minimum lifetime daily check-ins. */
   minCheckIns?: number;
 }
@@ -63,7 +63,6 @@ export const REWARD_LADDER: RewardRung[] = [
     detail: "A free oral-health check-up at a partner clinic.",
     kind: "real",
     icon: "Stethoscope",
-    requiresScanOnOrAfterDay: 15,
     minCheckIns: 10,
   },
   {
@@ -74,7 +73,6 @@ export const REWARD_LADDER: RewardRung[] = [
     kind: "real",
     icon: "Ticket",
     badgeTier: "gold",
-    requiresScanOnOrAfterDay: 30,
     minCheckIns: 20,
   },
   {
@@ -84,7 +82,6 @@ export const REWARD_LADDER: RewardRung[] = [
     detail: "A free oral-care kit from a partner brand.",
     kind: "real",
     icon: "Gift",
-    requiresScanOnOrAfterDay: 90,
     minCheckIns: 60,
   },
   {
@@ -95,7 +92,6 @@ export const REWARD_LADDER: RewardRung[] = [
     kind: "real",
     icon: "Sparkles",
     badgeTier: "platinum",
-    requiresScanOnOrAfterDay: 180,
     minCheckIns: 120,
   },
   {
@@ -106,7 +102,6 @@ export const REWARD_LADDER: RewardRung[] = [
     kind: "real",
     icon: "Trophy",
     badgeTier: "diamond",
-    requiresScanOnOrAfterDay: 365,
     minCheckIns: 240,
   },
 ];
@@ -118,8 +113,6 @@ export interface RewardContext {
   streakDays: number;
   /** Lifetime completed daily check-ins. */
   totalCheckIns: number;
-  /** Day-index (relative to quit) of each completed oral scan. */
-  scanDays: number[];
   /** Ids already claimed — claimed rewards are permanent, even after a slip. */
   claimedIds: string[];
 }
@@ -142,14 +135,8 @@ export function rewardStatus(rung: RewardRung, ctx: RewardContext): RewardStatus
 
   if (rung.kind === "digital") return { id: rung.id, state: "claimable" };
 
-  // Real reward — check objective evidence.
+  // Real reward — check the evidence.
   const missing: string[] = [];
-  if (rung.requiresScanOnOrAfterDay != null) {
-    const hasScan = ctx.scanDays.some((d) => d >= rung.requiresScanOnOrAfterDay!);
-    if (!hasScan) {
-      missing.push(`a completed oral scan on or after day ${rung.requiresScanOnOrAfterDay}`);
-    }
-  }
   if (rung.minCheckIns != null && ctx.totalCheckIns < rung.minCheckIns) {
     missing.push(`${rung.minCheckIns - ctx.totalCheckIns} more daily check-ins`);
   }

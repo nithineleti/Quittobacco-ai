@@ -22,20 +22,6 @@ export interface ClaimedReward {
   redeemed?: boolean;
 }
 
-export interface ScanRecord {
-  id: string;
-  date: string;
-  /** Days since quitting at the time of the scan. */
-  dayIndex: number;
-  /** 0–100 oral-health tracking score (lower = healthier). */
-  score: number;
-  /** The visible symptom-checklist answers the score is derived from. */
-  answers: Record<string, string>;
-  /** IndexedDB key for the photo (images never go in localStorage). */
-  imageKey?: string;
-  note?: string;
-}
-
 export interface PersistedState {
   language: Language;
   hasOnboarded: boolean;
@@ -49,8 +35,6 @@ export interface PersistedState {
   savingsGoal?: number;
   claimed: Record<string, ClaimedReward>;
   videos: Record<string, VideoProgress>;
-  scanDisclaimerAck: boolean;
-  scans: ScanRecord[];
   /**
    * Distinct ISO dates on which the user actually opened the app while signed
    * in. Rewards are earned from these, not from elapsed calendar time — see
@@ -69,8 +53,6 @@ interface Actions {
   claimReward: (id: string, code: string) => void;
   redeemReward: (id: string) => void;
   setVideoProgress: (id: string, percent: number) => void;
-  ackScanDisclaimer: () => void;
-  addScan: (scan: ScanRecord) => void;
   setSavingsGoal: (goal: number) => void;
   saveProgress: (name?: string) => void;
   linkAccount: (name?: string) => void;
@@ -106,8 +88,6 @@ const initial: PersistedState = {
   checkIns: [],
   claimed: {},
   videos: {},
-  scanDisclaimerAck: false,
-  scans: [],
   loginDays: [],
 };
 
@@ -180,10 +160,6 @@ export const useStore = create<Store>()(
           };
         }),
 
-      ackScanDisclaimer: () => set({ scanDisclaimerAck: true }),
-
-      addScan: (scan) => set((s) => ({ scans: [...s.scans, scan] })),
-
       setSavingsGoal: (savingsGoal) => set({ savingsGoal }),
 
       saveProgress: (name) =>
@@ -208,7 +184,9 @@ export const useStore = create<Store>()(
        * Wholesale replace, used when the account holds a newer copy than this
        * device (a reinstall, or a second phone). Starts from `initial` so a
        * field absent from the server copy resets rather than lingering from
-       * whoever used this device last.
+       * whoever used this device last. Keys the server copy carries that this
+       * version no longer knows (an older client's data) ride along harmlessly
+       * — `partialize` below never writes them back out.
        */
       adoptServerState: (incoming) => set({ ...initial, ...incoming }),
 
@@ -231,8 +209,6 @@ export const useStore = create<Store>()(
         savingsGoal: s.savingsGoal,
         claimed: s.claimed,
         videos: s.videos,
-        scanDisclaimerAck: s.scanDisclaimerAck,
-        scans: s.scans,
         loginDays: s.loginDays,
         savedAt: s.savedAt,
       }),

@@ -1,19 +1,23 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   bumpLoginAttempts,
   createUser,
   deleteUser,
+  deleteUserState,
   findUserByEmail,
   findUserByPhone,
   isUniqueViolation,
+  logLoginEvent,
   normalizeEmail,
   recordLogin,
   resetLoginAttempts,
   updateUserLanguage,
 } from "@/lib/auth/db";
+import { isDemoEmail } from "@/lib/auth/demo";
 import {
   assertMailerConfigured,
   passwordResetMail,
@@ -21,12 +25,23 @@ import {
 } from "@/lib/auth/mailer";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
+  OTP_LENGTH,
+  OTP_TTL_MINUTES,
+  burnOtp,
+  checkOtp,
+  issueOtp,
+  normalizeOtpInput,
+} from "@/lib/auth/otp";
+import {
   RESET_TTL_MINUTES,
   applyReset,
   createResetLink,
 } from "@/lib/auth/reset";
 import { createSession, deleteSession, readSession } from "@/lib/auth/session";
+import { otpSms, revealsOtp, sendSms } from "@/lib/auth/sms";
+import { baseUrl } from "@/lib/auth/url";
 import {
+  formatPhone,
   normalizePhone,
   validateEmail,
   validatePassword,
@@ -68,6 +83,22 @@ const WINDOW_SECONDS = 15 * 60;
 const MAX_ATTEMPTS = 8;
 /** Reset e-mails are capped harder — each one lands in someone's inbox. */
 const MAX_RESETS = 3;
+/** OTP texts likewise: each costs money and lands on someone's phone. */
+const MAX_OTP_SENDS = 3;
+/**
+ * Guesses at a 6-digit code. Five wrong tries then the code is burned, so a
+ * million-guess sweep is impossible no matter how patient the attacker is.
+ */
+const MAX_OTP_GUESSES = 5;
+
+/** IP and device, for the login audit log — never used for an access decision. */
+async function requestMeta(): Promise<{ ip?: string; userAgent?: string }> {
+  const h = await headers();
+  return {
+    ip: h.get("x-forwarded-for")?.split(",")[0]?.trim(),
+    userAgent: h.get("user-agent") ?? undefined,
+  };
+}
 
 // ---------------------------------------------------------------- sign in ---
 
@@ -92,21 +123,52 @@ export async function signIn(
     };
   }
 
+  const meta = await requestMeta();
   const throttleKey = `signin:${normalizeEmail(email)}`;
   const attempts = await bumpLoginAttempts(throttleKey, WINDOW_SECONDS);
   if (attempts > MAX_ATTEMPTS) {
+    await logLoginEvent({
+      userId: null,
+      email,
+      method: "password",
+      action: "sign_in",
+      success: false,
+      reason: "too_many_attempts",
+      ...meta,
+    });
     return { values, error: "auth.errors.tooMany" };
   }
 
   const user = await findUserByEmail(email);
-  // Deliberately identical response for "no such user" and "wrong password",
-  // so the form can't be used to discover which e-mails are registered.
-  if (!user || !(await verifyPassword(password, user.password_hash))) {
+  // A Google-created account has no password to check — reject it exactly
+  // like a wrong password would be, rather than throwing on the null hash.
+  // Deliberately the same response as "no such user" too, so the form can't
+  // be used to discover which e-mails are registered or how they sign in.
+  const passwordOk =
+    user?.password_hash != null && (await verifyPassword(password, user.password_hash));
+  if (!user || !passwordOk) {
+    await logLoginEvent({
+      userId: user?.id ?? null,
+      email,
+      method: "password",
+      action: "sign_in",
+      success: false,
+      reason: user && user.password_hash == null ? "google_only_account" : "bad_credentials",
+      ...meta,
+    });
     return { values, error: "auth.errors.badCredentials" };
   }
 
   await resetLoginAttempts(throttleKey);
   await recordLogin(user.id, language);
+  await logLoginEvent({
+    userId: user.id,
+    email: user.email,
+    method: "password",
+    action: "sign_in",
+    success: true,
+    ...meta,
+  });
   await createSession({
     userId: user.id,
     email: user.email,
@@ -194,6 +256,14 @@ export async function signUp(
     language,
     v: 0,
   });
+  await logLoginEvent({
+    userId: id,
+    email: normalizeEmail(email),
+    method: "password",
+    action: "sign_up",
+    success: true,
+    ...(await requestMeta()),
+  });
 
   redirect("/");
 }
@@ -273,6 +343,177 @@ export async function performPasswordReset(
   return { done: true };
 }
 
+// ------------------------------------------------------------- mobile OTP ---
+
+export interface OtpState {
+  /** Form-level error, as an i18n key. */
+  error?: string;
+  fieldErrors?: Partial<Record<"phone" | "code", string>>;
+  /** Echoed back so a failed submit doesn't wipe the number. */
+  values?: { phone?: string };
+  /** Set once a code has gone out — the UI moves to the "enter code" step. */
+  sent?: boolean;
+  /** The number the code went to, in E.164; the verify step posts it back. */
+  sentTo?: string;
+  /** Same number, formatted for display. */
+  sentToLabel?: string;
+  /**
+   * Development only: the code itself, when no SMS provider is configured.
+   * Never set in production — see revealsOtp() in sms.ts.
+   */
+  devCode?: string;
+  /** The number has no account: the UI offers the sign-up form, number pre-filled. */
+  switchToSignUp?: boolean;
+}
+
+/**
+ * Step 1: text a one-time code to a registered mobile number.
+ *
+ * Unlike the password-reset form this DOES say when a number is unknown.
+ * Sending nothing and claiming success would strand a first-time visitor
+ * waiting for a text that never comes; the sign-up form already reveals
+ * whether a number is taken, so nothing new is leaked by saying so here.
+ */
+export async function requestOtp(
+  _prev: OtpState | undefined,
+  formData: FormData,
+): Promise<OtpState> {
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const values = { phone: phoneRaw };
+
+  if (!phoneRaw) return { values, fieldErrors: { phone: "auth.errors.phoneRequired" } };
+  const phone = normalizePhone(phoneRaw);
+  if (!phone) return { values, fieldErrors: { phone: "auth.errors.phoneInvalid" } };
+
+  const meta = await requestMeta();
+  if ((await bumpLoginAttempts(`otp-send:${phone}`, WINDOW_SECONDS)) > MAX_OTP_SENDS) {
+    await logLoginEvent({
+      userId: null,
+      email: phone,
+      method: "otp",
+      action: "sign_in",
+      success: false,
+      reason: "too_many_sends",
+      ...meta,
+    });
+    return { values, error: "auth.errors.tooMany" };
+  }
+
+  const user = await findUserByPhone(phone);
+  if (!user) {
+    await logLoginEvent({
+      userId: null,
+      email: phone,
+      method: "otp",
+      action: "sign_in",
+      success: false,
+      reason: "phone_unknown",
+      ...meta,
+    });
+    return { values, switchToSignUp: true, error: "auth.errors.phoneUnknown" };
+  }
+
+  const issued = await issueOtp(user, phone);
+  if (!issued.demo) {
+    try {
+      // The host goes in the text so the browser's SMS auto-fill recognises it.
+      const host = new URL(await baseUrl()).host;
+      await sendSms({ to: phone, body: otpSms(issued.code, OTP_TTL_MINUTES, host) });
+    } catch (err) {
+      console.error("OTP send failed", err);
+      return { values, error: "auth.errors.smsFailed" };
+    }
+  }
+
+  return {
+    sent: true,
+    sentTo: phone,
+    sentToLabel: formatPhone(phone),
+    values,
+    devCode: !issued.demo && revealsOtp() ? issued.code : undefined,
+  };
+}
+
+/** Step 2: check the code and sign in. */
+export async function verifyOtp(
+  _prev: OtpState | undefined,
+  formData: FormData,
+): Promise<OtpState> {
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const code = normalizeOtpInput(String(formData.get("code") ?? ""));
+  const language = safeLanguage(formData.get("language"));
+
+  const phone = normalizePhone(phoneRaw);
+  if (!phone) return { values: { phone: phoneRaw }, fieldErrors: { phone: "auth.errors.phoneInvalid" } };
+
+  // Everything below keeps the UI on the code step, with the number intact.
+  const base: OtpState = {
+    sent: true,
+    sentTo: phone,
+    sentToLabel: formatPhone(phone),
+    values: { phone: phoneRaw },
+  };
+
+  if (code.length !== OTP_LENGTH) {
+    return { ...base, fieldErrors: { code: "auth.errors.otpRequired" } };
+  }
+
+  const meta = await requestMeta();
+  const throttleKey = `otp-verify:${phone}`;
+  const user = await findUserByPhone(phone);
+
+  if ((await bumpLoginAttempts(throttleKey, WINDOW_SECONDS)) > MAX_OTP_GUESSES) {
+    // Out of guesses: the outstanding code is now worthless to everyone,
+    // including its rightful owner, who simply asks for a new one.
+    if (user) await burnOtp(user.id);
+    await logLoginEvent({
+      userId: user?.id ?? null,
+      email: user?.email ?? phone,
+      method: "otp",
+      action: "sign_in",
+      success: false,
+      reason: "too_many_attempts",
+      ...meta,
+    });
+    return { ...base, error: "auth.errors.tooMany" };
+  }
+
+  // Same response whether the number is unknown or the code is wrong.
+  const ok = user ? await checkOtp(user.id, code) : false;
+  if (!user || !ok) {
+    await logLoginEvent({
+      userId: user?.id ?? null,
+      email: user?.email ?? phone,
+      method: "otp",
+      action: "sign_in",
+      success: false,
+      reason: user ? "bad_otp" : "phone_unknown",
+      ...meta,
+    });
+    return { ...base, fieldErrors: { code: "auth.errors.otpInvalid" } };
+  }
+
+  await resetLoginAttempts(throttleKey);
+  await resetLoginAttempts(`otp-send:${phone}`);
+  await recordLogin(user.id, language);
+  await logLoginEvent({
+    userId: user.id,
+    email: user.email,
+    method: "otp",
+    action: "sign_in",
+    success: true,
+    ...meta,
+  });
+  await createSession({
+    userId: user.id,
+    email: user.email,
+    language,
+    v: user.token_version,
+  });
+
+  redirect(safeNext(formData.get("next")));
+}
+
 // --------------------------------------------------------- delete account ---
 
 /**
@@ -305,7 +546,25 @@ export async function updateLanguage(language: string): Promise<void> {
 
 // --------------------------------------------------------------- sign out ---
 
+/**
+ * If the account signing out is the demo account, wipes its synced journey
+ * so the next sign-in — by whoever, on whatever device — starts the
+ * questionnaire from scratch. Scoped to that one email: nothing else about
+ * sign-out changes for a real user, and this is a no-op unless
+ * NEXT_PUBLIC_DEMO_EMAIL is set, so it is inert in a deployment with no demo
+ * account configured at all.
+ */
+async function resetDemoAccountOnSignOut(): Promise<void> {
+  const session = await readSession();
+  if (session && isDemoEmail(session.email)) {
+    await deleteUserState(session.userId).catch(() => {
+      // Best-effort: a failed reset should never block signing out.
+    });
+  }
+}
+
 export async function signOut(): Promise<void> {
+  await resetDemoAccountOnSignOut();
   await deleteSession();
   redirect("/login");
 }
@@ -318,6 +577,7 @@ export async function signOut(): Promise<void> {
  * real problem on a phone shared by a family.
  */
 export async function signOutAndSignUp(): Promise<void> {
+  await resetDemoAccountOnSignOut();
   await deleteSession();
   redirect("/login?mode=signup");
 }

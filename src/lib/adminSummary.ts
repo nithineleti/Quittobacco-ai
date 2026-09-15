@@ -12,7 +12,6 @@ export interface JourneySummary {
   quitDate: string | null;
   checkIns: number;
   slips: number;
-  scans: number;
   rewardsClaimed: number;
   videosCompleted: number;
   /** Fagerström score, 0–10. */
@@ -21,6 +20,10 @@ export interface JourneySummary {
   savingsGoal: number | null;
   /** Whole days from quit date to today, ignoring slips. */
   daysSinceQuit: number | null;
+  /** Distinct days the app was opened since the quit date. */
+  activeDays: number;
+  /** ISO date of the most recent slip, if any. */
+  lastSlip: string | null;
 }
 
 const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
@@ -30,6 +33,7 @@ const obj = (v: unknown): Record<string, unknown> =>
     : {};
 const num = (v: unknown): number | null =>
   typeof v === "number" && Number.isFinite(v) ? v : null;
+const str = (v: unknown): string | null => (typeof v === "string" ? v : null);
 
 export function summarizeJourney(
   state: unknown,
@@ -38,7 +42,7 @@ export function summarizeJourney(
   const s = obj(state);
   const empty = Object.keys(s).length === 0;
   const intake = obj(s.intake);
-  const quitDate = typeof s.quitDate === "string" ? s.quitDate : null;
+  const quitDate = str(s.quitDate);
 
   let daysSinceQuit: number | null = null;
   if (quitDate) {
@@ -56,18 +60,28 @@ export function summarizeJourney(
     (v) => obj(v).status === "completed",
   ).length;
 
+  const loginDays = arr(s.loginDays).filter(
+    (d): d is string => typeof d === "string" && (!quitDate || d >= quitDate),
+  );
+
+  const slipDates = arr(s.slips)
+    .map((x) => str(obj(x).date))
+    .filter((d): d is string => d !== null)
+    .sort();
+
   return {
     hasJourney: !empty,
     onboarded: s.hasOnboarded === true,
     quitDate,
     checkIns: arr(s.checkIns).length,
-    slips: arr(s.slips).length,
-    scans: arr(s.scans).length,
+    slips: slipDates.length,
     rewardsClaimed: Object.keys(obj(s.claimed)).length,
     videosCompleted,
     dependence: num(intake.ftnd),
     readiness: num(intake.readiness),
     savingsGoal: num(s.savingsGoal),
     daysSinceQuit,
+    activeDays: new Set(loginDays).size,
+    lastSlip: slipDates.at(-1) ?? null,
   };
 }

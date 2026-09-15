@@ -227,7 +227,6 @@ export function OnboardingFlow() {
     const summary = completeIntake(answers);
     const info = currentBadge(summary.startingTier, {
       daysFree: 0,
-      scansCompleted: 0,
       videosCompleted: 0,
     });
     setReveal({ summary, next: info.next });
@@ -256,9 +255,9 @@ export function OnboardingFlow() {
     const s = slides[intro];
     const last = intro === slides.length - 1;
     const toneBlock: Record<string, string> = {
-      primary: "bg-primary-soft text-primary",
-      gold: "bg-gold-soft text-gold",
-      success: "bg-success-soft text-success",
+      primary: "bg-brand-gradient shadow-float",
+      gold: "bg-tile-amber text-tile-amber-fg",
+      success: "bg-tile-emerald text-tile-emerald-fg",
     };
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 py-8">
@@ -282,7 +281,7 @@ export function OnboardingFlow() {
             <Icon name={s.icon} className="size-20" />
           </div>
           <div key={`t-${intro}`} className="animate-fade-in flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold text-fg">{s.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-fg">{s.title}</h1>
             <p className="max-w-xs text-base text-muted">{s.body}</p>
           </div>
         </div>
@@ -483,7 +482,7 @@ export function OnboardingFlow() {
               value={a.motivation ?? 5}
               onChange={(e) => patch({ motivation: Number(e.target.value) })}
               aria-label={t("q.motivation.label")}
-              className="h-2 w-full accent-[var(--primary)]"
+              className="h-2 w-full accent-primary"
             />
             <div className="flex items-center justify-between text-sm text-muted">
               <span>{t("q.motivation.low")}</span>

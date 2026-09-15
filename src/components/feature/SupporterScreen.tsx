@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Brand } from "@/components/Brand";
 import { Icon } from "@/components/Icon";
-import { GrowingPlant } from "@/components/feature/GrowingPlant";
+import { RecoveryRing } from "@/components/feature/RecoveryRing";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import i18n from "@/i18n/client";
 import { formatINR } from "@/lib/format";
+import { recoveryPercent } from "@/lib/health";
 import { shareText } from "@/lib/share";
 
 /**
@@ -31,18 +31,22 @@ export function SupporterScreen() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6 py-10">
       <Brand className="self-center" />
 
-      <Card float className="flex flex-col items-center gap-3 bg-primary-soft text-center">
-        <GrowingPlant days={days} className="h-32 w-28" label={t("supporter.daysFree", { count: days })} />
-        <h1 className="text-2xl font-semibold text-fg">{t("supporter.title", { name })}</h1>
-        <p className="text-lg font-semibold text-primary">
+      <div className="flex flex-col items-center gap-3 rounded-card bg-brand-gradient p-6 text-center shadow-float">
+        <RecoveryRing
+          percent={recoveryPercent(days)}
+          size={120}
+          label={t("supporter.daysFree", { count: days })}
+        />
+        <h1 className="text-2xl font-bold tracking-tight">{t("supporter.title", { name })}</h1>
+        <p className="text-lg font-semibold opacity-95">
           {t("supporter.daysFree", { count: days })}
         </p>
         {saved > 0 && (
-          <p className="text-sm text-muted">
+          <p className="text-sm opacity-90">
             {t("supporter.savedLine", { amount: formatINR(saved) })}
           </p>
         )}
-      </Card>
+      </div>
 
       <p className="text-center text-base text-muted">{t("supporter.body")}</p>
 

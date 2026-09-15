@@ -73,7 +73,7 @@ export function RewardsScreen() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("rewards.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("rewards.title")}</h1>
         <p className="text-sm text-muted">{t("rewards.subtitle")}</p>
       </header>
 
@@ -114,10 +114,10 @@ export function RewardsScreen() {
                 <div className="flex flex-col items-center">
                   <span
                     className={cn(
-                      "grid size-12 place-items-center rounded-pill",
+                      "grid size-12 place-items-center rounded-tile",
                       status.state === "locked"
                         ? "bg-surface-2 text-muted"
-                        : "bg-gold-soft text-gold",
+                        : "bg-tile-amber text-tile-amber-fg",
                     )}
                   >
                     <Icon name={status.state === "locked" ? "Lock" : rung.icon} className="size-6" />

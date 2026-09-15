@@ -1,15 +1,18 @@
 import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "gold";
+type Variant = "primary" | "secondary" | "soft" | "ghost" | "danger" | "gold";
 type Size = "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-pill font-semibold leading-none transition-[opacity,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:pointer-events-none select-none";
+  "inline-flex items-center justify-center gap-2 rounded-pill font-semibold leading-none transition-[opacity,background-color,color,transform] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:pointer-events-none select-none";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-primary text-primary-fg hover:opacity-90",
-  secondary: "bg-surface-2 text-fg hover:bg-border",
+  // The gradient is reserved for the ONE main action on a screen; everything
+  // else steps down to a flat fill so the eye lands where it should.
+  primary: "bg-brand-gradient shadow-float hover:opacity-95",
+  secondary: "bg-card text-fg border border-border shadow-card hover:bg-surface-2",
+  soft: "bg-primary-soft text-primary hover:opacity-90",
   ghost: "bg-transparent text-fg hover:bg-surface-2",
   danger: "bg-danger text-danger-fg hover:opacity-90",
   gold: "bg-gold-fill text-gold-fg hover:opacity-90",

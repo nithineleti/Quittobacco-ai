@@ -30,7 +30,6 @@ export function BadgeReveal({
   const needs = next
     ? [
         next.need.days > 0 && t("badge.needDays", { count: next.need.days }),
-        next.need.scans > 0 && t("badge.needScans", { count: next.need.scans }),
         next.need.videos > 0 && t("badge.needVideos", { count: next.need.videos }),
       ].filter((x): x is string => Boolean(x))
     : [];
@@ -44,7 +43,7 @@ export function BadgeReveal({
           aria-hidden
         />
         <span
-          className={`animate-pop grid size-32 place-items-center rounded-pill shadow-float ${meta.fill} ${meta.fg}`}
+          className={`animate-pop grid size-32 place-items-center rounded-4xl shadow-float ${meta.fill} ${meta.fg}`}
         >
           <Icon name={meta.icon} className="size-16" />
         </span>

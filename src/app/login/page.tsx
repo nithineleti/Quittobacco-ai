@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { Brand } from "@/components/Brand";
 import { LoginScreen } from "@/components/feature/LoginScreen";
 import { getOptionalUser } from "@/lib/auth/dal";
+import { isGoogleConfigured } from "@/lib/auth/google";
+import { isOtpSignInAvailable } from "@/lib/auth/sms";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -26,6 +28,8 @@ export default async function LoginPage() {
         account={
           user ? { email: user.email, name: user.display_name ?? undefined } : null
         }
+        googleEnabled={isGoogleConfigured()}
+        otpEnabled={isOtpSignInAvailable()}
       />
     </Suspense>
   );

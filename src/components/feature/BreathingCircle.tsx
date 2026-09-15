@@ -50,7 +50,7 @@ export function BreathingCircle({
       const p = phaseAt(v.phases, el);
       if (p.k !== lastPhase.current) {
         lastPhase.current = p.k;
-        if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(20);
+        if (typeof navigator !== "undefined" && navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate(20);
       }
       setPhase(p);
     }, 250);

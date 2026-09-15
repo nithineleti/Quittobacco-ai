@@ -15,8 +15,6 @@ function store(over: Partial<Store> = {}): Store {
     checkIns: [],
     claimed: {},
     videos: {},
-    scanDisclaimerAck: false,
-    scans: [],
     loginDays: [],
     quitDate: "2026-03-01",
     ...over,

@@ -46,7 +46,7 @@ export const CONTENT: ContentItem[] = [
     id: "c2",
     type: "video",
     categoryId: "risks",
-    icon: "ScanLine",
+    icon: "Stethoscope",
     durationMin: 5,
     demoSeconds: 20,
     title: { en: "Oral cancer: early signs", hi: "मुँह का कैंसर: शुरुआती संकेत" },

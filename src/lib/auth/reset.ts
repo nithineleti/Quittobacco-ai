@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { headers } from "next/headers";
 import {
   RESET_PURPOSE,
   consumeToken,
@@ -13,6 +12,7 @@ import {
   type UserRow,
 } from "@/lib/auth/db";
 import { hashPassword } from "@/lib/auth/password";
+import { baseUrl } from "@/lib/auth/url";
 
 export const RESET_TTL_MINUTES = 30;
 
@@ -24,26 +24,6 @@ export const RESET_TTL_MINUTES = 30;
  */
 function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
-}
-
-/** Absolute base URL for links in e-mail. */
-async function baseUrl(): Promise<string> {
-  // APP_URL wins — it is the only one that knows about a custom domain.
-  const explicit = process.env.APP_URL ?? process.env.URL; // URL is set by Netlify
-  if (explicit) return explicit.replace(/\/$/, "");
-
-  // Vercel exposes bare hostnames, no protocol. Prefer the stable production
-  // host over VERCEL_URL, which is per-deployment: a reset e-mail sent from a
-  // preview build should still point at the real site.
-  const vercelHost =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
-  if (vercelHost) return `https://${vercelHost.replace(/\/$/, "")}`;
-
-  // Otherwise trust the incoming request's own host.
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-  return `${proto}://${host}`;
 }
 
 /** Creates a single-use reset token and returns the link to e-mail. */

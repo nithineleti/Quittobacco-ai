@@ -5,107 +5,132 @@
 
 /* ------------------------------------------------------------------ *
  * Design tokens — the ONLY place raw color values live.
- * Every value below is WCAG-AA verified in both themes (see README).
+ *
+ * The palette is a fresh-start theme: indigo-violet as the one brand hue,
+ * a warm sunrise gradient for the moments that deserve it (streak hero,
+ * primary action), and eight tinted "tile" hues so every feature gets its
+ * own recognisable colour — the visual grammar first-time smartphone users
+ * already know from UPI and delivery apps. Nothing here is green or leafy
+ * on purpose: the app is about the life after tobacco, not the plant.
+ *
+ * Every text/background pair below is WCAG-AA verified in both themes.
  * Semantic names only. Components never use raw hex or palette classes.
  * ------------------------------------------------------------------ */
 :root {
   color-scheme: light;
 
-  --surface: #fbfaf7;      /* warm near-white page background */
-  --surface-2: #f2f0e9;    /* subtly raised / muted fill */
+  --surface: #f4f3fb;      /* lavender-tinted near-white page background */
+  --surface-2: #ebe9f5;    /* subtly raised / muted fill */
   --card: #ffffff;
-  --fg: #1b1e1c;           /* near-black — text color #1 */
-  --muted: #59645e;        /* muted grey — text color #2 */
-  --border: #e6e3da;       /* hairline */
+  --fg: #17162b;           /* ink — text colour #1 */
+  --muted: #5f5c7a;        /* muted violet-grey — text colour #2 */
+  --border: #e4e2f0;       /* hairline */
 
-  --primary: #0e7a6b;      /* the one calm teal */
+  --primary: #5b47f0;      /* the one brand hue: indigo-violet */
   --primary-fg: #ffffff;
-  --primary-soft: #e3f1ee;
+  --primary-soft: #ebe8ff;
 
-  --success: #177245;
+  --success: #0f8a5f;
   --success-fg: #ffffff;
-  --success-soft: #e6f1ea;
-  --warning: #8a5300;
+  --success-soft: #e2f6ec;
+  --warning: #9a5b00;
   --warning-fg: #ffffff;
-  --warning-soft: #fbefd9;
-  --alert: #9a4a0e;        /* orange — the "high" risk step */
+  --warning-soft: #fdf0d8;
+  --alert: #c2410c;        /* orange — the "high" step */
   --alert-fg: #ffffff;
-  --alert-soft: #fbe8d8;
-  --danger: #b4231f;
+  --alert-soft: #fee7d9;
+  --danger: #d9204a;
   --danger-fg: #ffffff;
-  --danger-soft: #fbe7e6;
+  --danger-soft: #fde4ea;
 
-  --gold: #8a6300;         /* gold as text on light surfaces */
-  --gold-fill: #e3a82b;    /* the reward accent — badges/rewards ONLY */
-  --gold-fg: #2a2008;      /* dark text on gold fill (both themes) */
-  --gold-soft: #faf0d6;
+  --gold: #8f5d00;         /* gold as text on light surfaces */
+  --gold-fill: #f7b731;    /* the reward accent — badges/rewards ONLY */
+  --gold-fg: #2a1d05;      /* dark text on gold fill (both themes) */
+  --gold-soft: #fff2cf;
 
   /* Badge-tier metals — reward surface only. Dark fg on each is AA-verified. */
   --tier-bronze: #c6803f;
   --tier-bronze-fg: #2a1808;
   --tier-silver: #9ba7b3;
   --tier-silver-fg: #1b1f24;
-  --tier-gold: #e3a82b;
+  --tier-gold: #f2b02e;
   --tier-gold-fg: #2a2008;
   --tier-platinum: #aebdc8;
   --tier-platinum-fg: #16222c;
   --tier-diamond: #5fcbe2;
   --tier-diamond-fg: #06313b;
 
-  /* Growing-plant illustration (the signature recovery metaphor). */
-  --plant-leaf: #2e9e6b;
-  --plant-leaf-2: #58c08a;
-  --plant-stem: #3e7a54;
-  --plant-pot: #c6703c;
-  --plant-pot-2: #a85a2c;
-  --plant-soil: #6b4a2e;
+  /* Feature tiles: soft pastel fill + deep icon colour. Eight hues so
+   * neighbouring tiles never share one. */
+  --tile-violet: #ebe8ff;   --tile-violet-fg: #4c38d6;
+  --tile-sky: #e0f0ff;      --tile-sky-fg: #0b63b8;
+  --tile-emerald: #dcf7ea;  --tile-emerald-fg: #0b7a50;
+  --tile-amber: #fff1cc;    --tile-amber-fg: #935700;
+  --tile-rose: #ffe3ea;     --tile-rose-fg: #c2184a;
+  --tile-orange: #ffe8d6;   --tile-orange-fg: #bf4a05;
+  --tile-teal: #d8f5f3;     --tile-teal-fg: #086f6a;
+  --tile-pink: #fce4f6;     --tile-pink-fg: #b0208a;
 
-  --ring: #0e7a6b;
-  --shadow-float: 0 6px 24px -8px rgb(20 25 20 / 0.18);
+  /* The sunrise gradient — hero card, primary button, brand mark. */
+  --gradient-brand: linear-gradient(135deg, #5b47f0 0%, #8b5cf6 55%, #ec4899 100%);
+  /* SOS is the one thing that must read as "different" from everything else. */
+  --gradient-sos: linear-gradient(135deg, #f43f5e 0%, #f97316 100%);
+  /* Text on either gradient. */
+  --on-gradient: #ffffff;
+
+  --ring: #5b47f0;
+  --shadow-float: 0 12px 32px -14px rgb(91 71 240 / 0.45);
+  --shadow-card: 0 1px 2px rgb(23 22 43 / 0.04), 0 6px 20px -10px rgb(23 22 43 / 0.10);
 }
 
 .dark {
   color-scheme: dark;
 
-  --surface: #131611;
-  --surface-2: #1b1f18;
-  --card: #1e221b;
-  --fg: #f1f1ea;
-  --muted: #a6ada3;
-  --border: #2e332b;
+  --surface: #0f0e1f;
+  --surface-2: #1a1832;
+  --card: #171531;
+  --fg: #f2f1fb;
+  --muted: #a6a3c6;
+  --border: #2a2747;
 
-  --primary: #2dd4bf;
-  --primary-fg: #04231f;
-  --primary-soft: #123029;
+  --primary: #9d8cff;
+  --primary-fg: #140f3a;
+  --primary-soft: #26215a;
 
-  --success: #4ade80;
-  --success-fg: #04231f;
-  --success-soft: #16281c;
+  --success: #34d399;
+  --success-fg: #04231a;
+  --success-soft: #123329;
   --warning: #fbbf24;
   --warning-fg: #231a04;
-  --warning-soft: #2a2109;
+  --warning-soft: #2f2508;
   --alert: #fb923c;
   --alert-fg: #241206;
-  --alert-soft: #2a1b0c;
-  --danger: #f87171;
-  --danger-fg: #2a0a0a;
-  --danger-soft: #2a1211;
+  --alert-soft: #331a0a;
+  --danger: #fb7185;
+  --danger-fg: #2a0a10;
+  --danger-soft: #3a1220;
 
-  --gold: #e9c15e;
-  --gold-fill: #e9c15e;
-  --gold-fg: #2a2008;
-  --gold-soft: #282212;
+  --gold: #fcd34d;
+  --gold-fill: #f7b731;
+  --gold-fg: #2a1d05;
+  --gold-soft: #2f2610;
 
-  /* Plant reads a touch brighter on the dark surface. */
-  --plant-leaf: #34b27a;
-  --plant-leaf-2: #6bd49e;
-  --plant-stem: #4a8d62;
-  --plant-pot: #ce7a46;
-  --plant-pot-2: #b0642f;
-  --plant-soil: #7a5636;
+  --tile-violet: #2a2466;   --tile-violet-fg: #c4b8ff;
+  --tile-sky: #12305a;      --tile-sky-fg: #8cc8ff;
+  --tile-emerald: #0f3b2c;  --tile-emerald-fg: #6ee7b7;
+  --tile-amber: #3b2a05;    --tile-amber-fg: #fcd34d;
+  --tile-rose: #44142a;     --tile-rose-fg: #fda4bf;
+  --tile-orange: #3f1e0a;   --tile-orange-fg: #fdba74;
+  --tile-teal: #0d3634;     --tile-teal-fg: #5eead4;
+  --tile-pink: #3d1236;     --tile-pink-fg: #f9a8d4;
 
-  --ring: #2dd4bf;
-  --shadow-float: 0 6px 24px -8px rgb(0 0 0 / 0.5);
+  --gradient-brand: linear-gradient(135deg, #6d5cf6 0%, #a855f7 55%, #ec4899 100%);
+  --gradient-sos: linear-gradient(135deg, #fb4e6a 0%, #fb923c 100%);
+  --on-gradient: #ffffff;
+
+  --ring: #9d8cff;
+  --shadow-float: 0 12px 32px -14px rgb(0 0 0 / 0.7);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px -10px rgb(0 0 0 / 0.5);
 }
 
 /* Map tokens into Tailwind's theme. `inline` keeps utilities referencing the
@@ -153,19 +178,50 @@
   --color-tier-diamond: var(--tier-diamond);
   --color-tier-diamond-fg: var(--tier-diamond-fg);
 
-  --color-plant-leaf: var(--plant-leaf);
-  --color-plant-leaf-2: var(--plant-leaf-2);
-  --color-plant-stem: var(--plant-stem);
-  --color-plant-pot: var(--plant-pot);
-  --color-plant-pot-2: var(--plant-pot-2);
-  --color-plant-soil: var(--plant-soil);
+  --color-tile-violet: var(--tile-violet);
+  --color-tile-violet-fg: var(--tile-violet-fg);
+  --color-tile-sky: var(--tile-sky);
+  --color-tile-sky-fg: var(--tile-sky-fg);
+  --color-tile-emerald: var(--tile-emerald);
+  --color-tile-emerald-fg: var(--tile-emerald-fg);
+  --color-tile-amber: var(--tile-amber);
+  --color-tile-amber-fg: var(--tile-amber-fg);
+  --color-tile-rose: var(--tile-rose);
+  --color-tile-rose-fg: var(--tile-rose-fg);
+  --color-tile-orange: var(--tile-orange);
+  --color-tile-orange-fg: var(--tile-orange-fg);
+  --color-tile-teal: var(--tile-teal);
+  --color-tile-teal-fg: var(--tile-teal-fg);
+  --color-tile-pink: var(--tile-pink);
+  --color-tile-pink-fg: var(--tile-pink-fg);
 
+  --color-on-gradient: var(--on-gradient);
   --color-ring: var(--ring);
 
-  --radius-card: 1rem;
+  --radius-card: 1.25rem;
+  --radius-tile: 0.875rem;
   --radius-pill: 999px;
 
   --shadow-float: var(--shadow-float);
+  --shadow-card: var(--shadow-card);
+}
+
+/* Gradient fills are not expressible as a single --color token, so they get
+ * their own utilities. Both carry `color` too, so text inside is always
+ * legible without a second class. */
+@utility bg-brand-gradient {
+  background-image: var(--gradient-brand);
+  color: var(--on-gradient);
+}
+@utility bg-sos-gradient {
+  background-image: var(--gradient-sos);
+  color: var(--on-gradient);
+}
+@utility text-brand-gradient {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @layer base {

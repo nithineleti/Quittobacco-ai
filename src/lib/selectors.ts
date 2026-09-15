@@ -33,14 +33,6 @@ export function videosCompletedCount(s: Store): number {
   return Object.values(s.videos).filter((v) => v.status === "completed").length;
 }
 
-export function scansCompletedCount(s: Store): number {
-  return s.scans.length;
-}
-
-export function scanDayIndices(s: Store): number[] {
-  return s.scans.map((x) => x.dayIndex);
-}
-
 export function distinctCheckInDays(s: Store): number {
   return new Set(s.checkIns.map((c) => c.date)).size;
 }
@@ -48,7 +40,6 @@ export function distinctCheckInDays(s: Store): number {
 export function badgeProgress(s: Store, now: Date = new Date()): BadgeProgress {
   return {
     daysFree: streakDays(s, now),
-    scansCompleted: scansCompletedCount(s),
     videosCompleted: videosCompletedCount(s),
   };
 }
@@ -91,7 +82,6 @@ export function rewardContext(s: Store, now: Date = new Date()): RewardContext {
     // schedule — but a reward has to be turned up for.
     streakDays: activeDaysSinceQuit(s, now),
     totalCheckIns: distinctCheckInDays(s),
-    scanDays: scanDayIndices(s),
     claimedIds: Object.keys(s.claimed),
   };
 }

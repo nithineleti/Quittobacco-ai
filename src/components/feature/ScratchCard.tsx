@@ -32,7 +32,7 @@ export function ScratchCard({
     if (revealedRef.current) return;
     revealedRef.current = true;
     setRevealed(true);
-    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    if (typeof navigator !== "undefined" && navigator.vibrate && navigator.userActivation?.hasBeenActive) navigator.vibrate([20, 40, 20]);
     onReveal?.();
   };
 

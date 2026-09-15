@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Icon } from "@/components/Icon";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { IconTile } from "@/components/ui/IconTile";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { triggerById } from "@/data/triggers";
 import { loc } from "@/data/types";
@@ -41,33 +41,29 @@ export function PlanScreen() {
   return (
     <div className="animate-fade-in flex flex-col gap-4">
       <header>
-        <h1 className="text-2xl font-semibold text-fg">{t("plan.title")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-fg">{t("plan.title")}</h1>
         <p className="text-sm text-muted">{t("plan.sub")}</p>
       </header>
 
       <Card className="flex items-center gap-4">
-        <span className="grid size-12 place-items-center rounded-pill bg-primary-soft text-primary">
-          <Icon name="Calendar" className="size-6" />
-        </span>
+        <IconTile icon="Calendar" hue="sky" size="lg" />
         <div>
           <p className="text-sm text-muted">{t("plan.quitDate")}</p>
-          <p className="text-base font-semibold text-fg">
+          <p className="text-base font-bold text-fg">
             {s.quitDate ? formatDate(s.quitDate, lang === "hi" ? "hi-IN" : "en-IN") : "—"}
           </p>
         </div>
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <p className="text-base font-semibold text-fg">{t("plan.yourTriggers")}</p>
+        <p className="text-base font-bold text-fg">{t("plan.yourTriggers")}</p>
         <ul className="flex flex-col gap-3">
           {triggerIds.map((id) => {
             const tr = triggerById(id);
             if (!tr) return null;
             return (
               <li key={id} className="flex items-start gap-3">
-                <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-pill bg-surface-2 text-primary">
-                  <Icon name={tr.icon} className="size-5" />
-                </span>
+                <IconTile icon={tr.icon} hue="orange" size="sm" className="mt-0.5" />
                 <div>
                   <p className="text-base font-semibold text-fg">{loc(tr.label, lang)}</p>
                   <p className="text-sm text-muted">{loc(tr.coping, lang)}</p>
@@ -79,13 +75,11 @@ export function PlanScreen() {
       </Card>
 
       <Card className="flex flex-col gap-3">
-        <p className="text-base font-semibold text-fg">{t("plan.dailyHabits")}</p>
+        <p className="text-base font-bold text-fg">{t("plan.dailyHabits")}</p>
         <ul className="flex flex-col gap-2">
           {HABITS.map((h) => (
             <li key={h.key} className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-pill bg-success-soft text-success">
-                <Icon name={h.icon} className="size-5" />
-              </span>
+              <IconTile icon={h.icon} hue="emerald" size="sm" />
               <p className="text-base text-fg">{t(h.key)}</p>
             </li>
           ))}
@@ -93,12 +87,10 @@ export function PlanScreen() {
       </Card>
 
       <Card className="flex flex-col gap-3 bg-gold-soft">
-        <p className="text-base font-semibold text-fg">{t("plan.rewardLadderTitle")}</p>
+        <p className="text-base font-bold text-fg">{t("plan.rewardLadderTitle")}</p>
         {next && (
           <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-pill bg-gold-fill text-gold-fg">
-              <Icon name={next.rung.icon} className="size-6" />
-            </span>
+            <IconTile icon={next.rung.icon} hue="amber" />
             <div className="min-w-0 flex-1">
               <p className="text-sm text-muted">{t("plan.nextReward")}</p>
               <p className="text-base font-semibold text-fg">

@@ -47,3 +47,4 @@ next-env.d.ts
 
 # account database + dev session secret (never commit real user data)
 /data/
+/shots/

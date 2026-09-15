@@ -1,5 +1,6 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { Pool } from "pg";
 
 /**
@@ -127,6 +128,11 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAUL
 -- ordinary sign-up.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
 
+-- Google-created accounts have no password to hash. Idempotent: running this
+-- against an already-nullable column is a silent no-op, so it is safe to leave
+-- in the schema that runs on every cold start.
+ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
+
 -- Reserved for the OTP work (phone sign-in, e-mailed password reset). The
 -- table exists now so adding delivery later is a feature, not a migration.
 CREATE TABLE IF NOT EXISTS auth_tokens (
@@ -168,6 +174,66 @@ CREATE TABLE IF NOT EXISTS login_attempts (
   count        INTEGER NOT NULL DEFAULT 0,
   window_start TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Audit trail of every sign-in and sign-up attempt, successful or not. This is
+-- the real, honest answer to "see login credentials in a dashboard": no
+-- plaintext password is ever stored anywhere (see password.ts), so there is
+-- nothing to show for the credential itself — but every USE of one is logged
+-- here and visible on /backend.
+--
+-- user_id is nullable and ON DELETE SET NULL, deliberately: deleting an
+-- account must not delete its audit history.
+CREATE TABLE IF NOT EXISTS login_events (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
+  email      TEXT NOT NULL,
+  method     TEXT NOT NULL,
+  action     TEXT NOT NULL,
+  success    BOOLEAN NOT NULL,
+  reason     TEXT,
+  ip         TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_events_created ON login_events(created_at DESC);
+
+-- The Patient ID a clinician reads off a patient's phone to find them in the
+-- admin panel. A short, sequential number rather than the UUID primary key:
+-- "QT-000042" can be said aloud across a desk and typed without error, which
+-- a 36-character UUID cannot. Existing rows are numbered on the ALTER, in
+-- creation order (Postgres evaluates a volatile default once per row).
+CREATE SEQUENCE IF NOT EXISTS users_patient_no_seq;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS patient_no INTEGER NOT NULL DEFAULT nextval('users_patient_no_seq');
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_patient_no ON users(patient_no);
+
+-- Reports, images and documents a clinician sends to ONE patient. Only an
+-- operator can write here (document-actions.ts); a patient can only read
+-- their own rows (api/documents). Bytes live in the row: the app's single
+-- stateful dependency stays Postgres, the file is covered by the same backups
+-- as the account, and nothing needs a second bucket with its own access
+-- policy. Files are capped at 4 MB for exactly this reason.
+--
+-- user_id cascades: a deleted account takes its documents with it, which is
+-- what "delete my account" must mean for medical material. uploaded_by does
+-- not: the document outlives the operator who sent it.
+CREATE TABLE IF NOT EXISTS patient_documents (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+  title       TEXT NOT NULL,
+  kind        TEXT NOT NULL,
+  note        TEXT,
+  file_name   TEXT NOT NULL,
+  mime        TEXT NOT NULL,
+  size_bytes  INTEGER NOT NULL,
+  data        BYTEA NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- When the PATIENT first opened it. Drives the "new" badge in the app.
+  seen_at     TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_patient_documents_user ON patient_documents(user_id, created_at DESC);
 `;
 
 /**
@@ -226,13 +292,16 @@ export interface UserRow {
   id: string;
   email: string;
   phone: string | null;
-  password_hash: string;
+  /** Null for an account created via Google — see google.ts. */
+  password_hash: string | null;
   display_name: string | null;
   language: string;
   created_at: string;
   last_login_at: string | null;
   token_version: number;
   is_admin: boolean;
+  /** Sequential Patient ID — display with formatPatientCode(). */
+  patient_no: number;
 }
 
 export interface AuthTokenRow {
@@ -291,7 +360,8 @@ export async function findUserByPhone(
 export async function createUser(input: {
   id: string;
   email: string;
-  passwordHash: string;
+  /** Null for a Google-created account — there is no password to hash. */
+  passwordHash: string | null;
   displayName?: string;
   phone?: string;
   language: string;
@@ -373,6 +443,7 @@ export async function resetLoginAttempts(key: string): Promise<void> {
 /** One row per user for the dashboard list. Never includes password_hash. */
 export interface AdminUserRow {
   id: string;
+  patient_no: number;
   email: string;
   display_name: string | null;
   phone: string | null;
@@ -382,7 +453,17 @@ export interface AdminUserRow {
   last_login_at: string | null;
   synced_at: string | null;
   state: unknown | null;
+  /** Reports/images/documents the clinic has sent this patient. */
+  documents: number;
 }
+
+const ADMIN_USER_SELECT = `
+  SELECT u.id, u.patient_no, u.email, u.display_name, u.phone, u.language,
+         u.is_admin, u.created_at, u.last_login_at,
+         s.updated_at AS synced_at, s.state,
+         (SELECT count(*) FROM patient_documents d WHERE d.user_id = u.id)::int AS documents
+    FROM users u
+    LEFT JOIN user_state s ON s.user_id = u.id`;
 
 /**
  * Every user with their journey, for the operator dashboard.
@@ -391,14 +472,13 @@ export interface AdminUserRow {
  * there is no plaintext password to show anyone, by design.
  */
 export async function listAllUsers(): Promise<AdminUserRow[]> {
-  return query<AdminUserRow>(
-    `SELECT u.id, u.email, u.display_name, u.phone, u.language, u.is_admin,
-            u.created_at, u.last_login_at,
-            s.updated_at AS synced_at, s.state
-       FROM users u
-       LEFT JOIN user_state s ON s.user_id = u.id
-      ORDER BY u.created_at DESC`,
-  );
+  return query<AdminUserRow>(`${ADMIN_USER_SELECT} ORDER BY u.created_at DESC`);
+}
+
+/** One patient, for the admin panel's per-patient page. */
+export async function getAdminUser(id: string): Promise<AdminUserRow | undefined> {
+  const rows = await query<AdminUserRow>(`${ADMIN_USER_SELECT} WHERE u.id = $1`, [id]);
+  return rows[0];
 }
 
 export async function countAuthTokens(): Promise<number> {
@@ -456,6 +536,14 @@ export async function saveUserState(
   return { stored: rows[0]?.stored ?? false, updated_at: rows[0]?.updated_at };
 }
 
+/**
+ * Wipes a user's synced journey. Used only for the demo account, so every
+ * sign-in starts the questionnaire from scratch — see isDemoEmail().
+ */
+export async function deleteUserState(userId: string): Promise<void> {
+  await query("DELETE FROM user_state WHERE user_id = $1", [userId]);
+}
+
 /** Language is account-level, so the choice follows the user to a new device. */
 export async function updateUserLanguage(
   id: string,
@@ -487,6 +575,8 @@ export async function deleteUser(id: string): Promise<void> {
 // ------------------------------------------------------------ reset tokens ---
 
 export const RESET_PURPOSE = "password_reset";
+/** One-time sign-in code texted to `users.phone` — see otp.ts. */
+export const OTP_PURPOSE = "phone_otp";
 
 export async function createAuthToken(input: {
   id: string;
@@ -525,6 +615,33 @@ export async function findLiveToken(
 }
 
 /**
+ * A user's unconsumed, unexpired tokens of one purpose. OTPs are looked up
+ * this way rather than by hash: the hash is salted with the row id, so the
+ * caller has to fetch the candidates and check each one (otp.ts).
+ */
+export async function findLiveTokensForUser(
+  userId: string,
+  purpose: string,
+): Promise<AuthTokenRow[]> {
+  return query<AuthTokenRow>(
+    `SELECT * FROM auth_tokens
+     WHERE user_id = $1 AND purpose = $2
+       AND consumed_at IS NULL AND expires_at > now()
+     ORDER BY created_at DESC`,
+    [userId, purpose],
+  );
+}
+
+/** Drops every outstanding token of one purpose — issuing a new OTP, or giving up on one. */
+export async function deleteTokens(userId: string, purpose: string): Promise<void> {
+  await query(
+    `DELETE FROM auth_tokens
+     WHERE user_id = $1 AND purpose = $2 AND consumed_at IS NULL`,
+    [userId, purpose],
+  );
+}
+
+/**
  * Marks the used token consumed and drops the user's other outstanding tokens
  * of the same purpose, so an older reset e-mail can't be replayed afterwards.
  */
@@ -550,4 +667,179 @@ export async function purgeExpiredTokens(): Promise<void> {
   } catch {
     // Non-fatal.
   }
+}
+
+// --------------------------------------------------------------- audit log ---
+
+export interface LoginEventInput {
+  userId: string | null;
+  email: string;
+  method: "password" | "google" | "otp";
+  action: "sign_in" | "sign_up";
+  success: boolean;
+  reason?: string;
+  ip?: string;
+  userAgent?: string;
+}
+
+/**
+ * Records one sign-in or sign-up attempt. Best-effort: a failed insert must
+ * never block the auth flow it is trying to observe, so this swallows its own
+ * errors rather than throwing — same fail-open shape as bumpLoginAttempts.
+ */
+export async function logLoginEvent(input: LoginEventInput): Promise<void> {
+  try {
+    await query(
+      `INSERT INTO login_events
+         (id, user_id, email, method, action, success, reason, ip, user_agent)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        randomUUID(),
+        input.userId,
+        normalizeEmail(input.email),
+        input.method,
+        input.action,
+        input.success,
+        input.reason ?? null,
+        input.ip ?? null,
+        input.userAgent ?? null,
+      ],
+    );
+  } catch (err) {
+    console.error("logLoginEvent failed", err);
+  }
+}
+
+export interface LoginEventRow {
+  id: string;
+  user_id: string | null;
+  email: string;
+  method: string;
+  action: string;
+  success: boolean;
+  reason: string | null;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: string;
+  display_name: string | null;
+}
+
+/** Most recent events first, for the operator dashboard. */
+export async function listLoginEvents(limit = 200): Promise<LoginEventRow[]> {
+  return query<LoginEventRow>(
+    `SELECT e.*, u.display_name
+       FROM login_events e
+       LEFT JOIN users u ON u.id = e.user_id
+      ORDER BY e.created_at DESC
+      LIMIT $1`,
+    [limit],
+  );
+}
+
+// ------------------------------------------------------- patient documents ---
+
+export type DocumentKind = "report" | "image" | "document";
+
+/** Everything about a document EXCEPT its bytes — what lists render. */
+export interface PatientDocumentMeta {
+  id: string;
+  user_id: string;
+  uploaded_by: string | null;
+  uploaded_by_name: string | null;
+  title: string;
+  kind: DocumentKind;
+  note: string | null;
+  file_name: string;
+  mime: string;
+  size_bytes: number;
+  created_at: string;
+  seen_at: string | null;
+}
+
+export interface PatientDocumentRow extends PatientDocumentMeta {
+  data: Buffer;
+}
+
+const DOCUMENT_META_SELECT = `
+  SELECT d.id, d.user_id, d.uploaded_by, d.title, d.kind, d.note, d.file_name,
+         d.mime, d.size_bytes, d.created_at, d.seen_at,
+         a.display_name AS uploaded_by_name
+    FROM patient_documents d
+    LEFT JOIN users a ON a.id = d.uploaded_by`;
+
+export async function createPatientDocument(input: {
+  userId: string;
+  uploadedBy: string;
+  title: string;
+  kind: DocumentKind;
+  note?: string;
+  fileName: string;
+  mime: string;
+  data: Buffer;
+}): Promise<string> {
+  const id = randomUUID();
+  await query(
+    `INSERT INTO patient_documents
+       (id, user_id, uploaded_by, title, kind, note, file_name, mime, size_bytes, data)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    [
+      id,
+      input.userId,
+      input.uploadedBy,
+      input.title,
+      input.kind,
+      input.note ?? null,
+      input.fileName,
+      input.mime,
+      input.data.byteLength,
+      input.data,
+    ],
+  );
+  return id;
+}
+
+/** Newest first. Metadata only — the bytes are fetched one at a time on open. */
+export async function listPatientDocuments(
+  userId: string,
+): Promise<PatientDocumentMeta[]> {
+  return query<PatientDocumentMeta>(
+    `${DOCUMENT_META_SELECT} WHERE d.user_id = $1 ORDER BY d.created_at DESC`,
+    [userId],
+  );
+}
+
+/** The whole row including bytes, for the download route. */
+export async function getPatientDocument(
+  id: string,
+): Promise<PatientDocumentRow | undefined> {
+  const rows = await query<PatientDocumentRow>(
+    `${DOCUMENT_META_SELECT.replace("SELECT d.id,", "SELECT d.data, d.id,")} WHERE d.id = $1`,
+    [id],
+  );
+  return rows[0];
+}
+
+export async function deletePatientDocument(id: string): Promise<void> {
+  await query("DELETE FROM patient_documents WHERE id = $1", [id]);
+}
+
+/** First open by the patient. Idempotent: never moves an existing timestamp. */
+export async function markDocumentSeen(id: string): Promise<void> {
+  await query(
+    "UPDATE patient_documents SET seen_at = now() WHERE id = $1 AND seen_at IS NULL",
+    [id],
+  );
+}
+
+export async function countUnseenDocuments(userId: string): Promise<number> {
+  const rows = await query<{ n: string }>(
+    "SELECT count(*) AS n FROM patient_documents WHERE user_id = $1 AND seen_at IS NULL",
+    [userId],
+  );
+  return Number(rows[0]?.n ?? 0);
+}
+
+export async function countAllDocuments(): Promise<number> {
+  const rows = await query<{ n: string }>("SELECT count(*) AS n FROM patient_documents");
+  return Number(rows[0]?.n ?? 0);
 }

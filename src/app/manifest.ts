@@ -5,13 +5,13 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "QuitTobacco — your quit journey",
     short_name: "QuitTobacco",
-    description: "A calm, game-like companion to help you quit tobacco, with real rewards.",
+    description: "A friendly, game-like companion to help you quit tobacco, with real rewards.",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#fbfaf7",
-    theme_color: "#0e7a6b",
+    background_color: "#f4f3fb",
+    theme_color: "#5b47f0",
     categories: ["health", "medical", "lifestyle"],
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

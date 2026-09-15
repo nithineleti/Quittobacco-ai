@@ -5,26 +5,27 @@ const isProd = process.env.NODE_ENV === "production";
 /**
  * Baseline security headers. Applied to every route.
  *
- * Note there is no `script-src` here. A strict script CSP needs a per-request
- * nonce, which forces every page to render dynamically and would have to be
- * threaded through the inline theme script in `app/layout.tsx`. The clickjacking
- * protection below is the part that actually matters for a login form, and it
- * needs no nonce. See README → "Security" for the follow-up.
+ * Content-Security-Policy is deliberately NOT set here: the real one — with a
+ * nonce-based `script-src`, not just `frame-ancestors` — is generated fresh
+ * per request in `src/proxy.ts`, since a static header can't carry a per-request
+ * nonce. Proxy's matcher covers every page route this app has, so nothing
+ * falls through to needing a fallback CSP here.
  */
 const securityHeaders = [
-  // Clickjacking: stop the app being framed and click-hijacked. `frame-ancestors`
-  // is the modern rule; X-Frame-Options covers older browsers.
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  // X-Frame-Options is the legacy half of the clickjacking protection —
+  // frame-ancestors (in proxy.ts's CSP) is the modern rule; this covers
+  // browsers old enough to ignore that.
   { key: "X-Frame-Options", value: "DENY" },
   // Don't let a response be re-interpreted as a different content type.
   { key: "X-Content-Type-Options", value: "nosniff" },
   // Never leak the full URL (which can carry ?next=) to third-party origins.
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // `camera=(self)` is deliberate: the oral-health scan uses a file input with
-  // capture="environment". Locking it would break a core feature.
+  // Nothing in the app captures media any more: images and reports reach a
+  // patient only from the clinic, via the admin panel. Locking the camera at
+  // the browser level means no future page can quietly reintroduce it.
   {
     key: "Permissions-Policy",
-    value: "camera=(self), microphone=(), geolocation=(), payment=()",
+    value: "camera=(), microphone=(), geolocation=(), payment=()",
   },
   // HSTS only in production — sending it in dev would pin the browser to HTTPS
   // for localhost and the LAN address used for phone testing, breaking both.
@@ -43,6 +44,16 @@ const nextConfig: NextConfig = {
   turbopack: { root: import.meta.dirname },
   // Don't advertise the framework and version to attackers.
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // Report uploads from the admin panel go through a Server Action. The
+      // default 1 MB would reject most phone photos; 5 MB leaves headroom over
+      // the app's own 4 MB per-file cap (document-actions.ts) for multipart
+      // framing, and stays under Vercel's 4.5 MB function body limit once the
+      // file itself is capped.
+      bodySizeLimit: "5mb",
+    },
+  },
   async headers() {
     return [
       {

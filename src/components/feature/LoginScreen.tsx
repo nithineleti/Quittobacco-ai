@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Eye, EyeOff } from "lucide-react";
 import { Brand } from "@/components/Brand";
+import { GoogleIcon } from "@/components/GoogleIcon";
+import { OtpSignIn } from "@/components/feature/OtpSignIn";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, inputClasses } from "@/components/ui/Field";
@@ -24,6 +26,8 @@ import {
 } from "@/lib/auth/actions";
 
 type Mode = "signin" | "signup";
+/** How the sign-in tab authenticates: the password form, or a texted code. */
+type Method = "password" | "otp";
 
 const EMPTY: AuthState = {};
 
@@ -32,10 +36,22 @@ export interface LoginAccount {
   name?: string;
 }
 
-export function LoginScreen({ account }: { account?: LoginAccount | null }) {
+export function LoginScreen({
+  account,
+  googleEnabled = false,
+  otpEnabled = false,
+}: {
+  account?: LoginAccount | null;
+  googleEnabled?: boolean;
+  /** False when no SMS provider is configured in production — see sms.ts. */
+  otpEnabled?: boolean;
+}) {
   const { t } = useTranslation();
   const params = useSearchParams();
   const next = params.get("next") ?? "";
+  // Set by the /api/auth/google/callback route on any failure. One generic
+  // message regardless of cause — see that route for why.
+  const googleError = params.get("error") === "google";
 
   const hydrated = useHydrated();
 
@@ -50,6 +66,10 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   const demoEmail = process.env.NEXT_PUBLIC_DEMO_EMAIL;
   const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
   const showDemo = Boolean(demoEmail && demoPassword) && !account;
+  // Same gate for the fixed demo OTP — see demoOtpFor() in demo.ts.
+  const demoPhone = process.env.NEXT_PUBLIC_DEMO_PHONE;
+  const demoOtp = process.env.NEXT_PUBLIC_DEMO_OTP;
+  const showDemoOtp = showDemo && otpEnabled && Boolean(demoPhone && demoOtp);
 
   const language = useStore((s) => s.language);
   const setLanguage = useStore((s) => s.setLanguage);
@@ -67,6 +87,13 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   // ?mode=signup is set by "create a different account" on the signed-in card.
   const wantsSignUp = params.get("mode") === "signup";
   const [mode, setMode] = useState<Mode>(wantsSignUp ? "signup" : "signin");
+  const [method, setMethod] = useState<Method>("password");
+  // Number carried from a failed OTP request ("no account has this number")
+  // into the sign-up form, so the visitor doesn't type it twice.
+  const [signupPhone, setSignupPhone] = useState<string | undefined>();
+  // Pre-fill for the OTP form, from the demo card. Also keys the form, so a
+  // second tap re-fills rather than being ignored as a stale defaultValue.
+  const [otpPhone, setOtpPhone] = useState<string | undefined>();
   const [showPassword, setShowPassword] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -116,10 +143,26 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   /** Fills both fields; the visitor still taps Sign in, so they see what happens. */
   const fillDemo = () => {
     setMode("signin");
+    setMethod("password");
     setPassword(demoPassword ?? "");
     const form = formRef.current;
     const email = form?.elements.namedItem("email");
     if (email instanceof HTMLInputElement) email.value = demoEmail ?? "";
+  };
+
+  /** Opens the OTP form with the demo number filled in; the code is printed on the card. */
+  const fillDemoOtp = () => {
+    setMode("signin");
+    setMethod("otp");
+    setOtpPhone(demoPhone);
+  };
+
+  /** From the OTP form: the number isn't registered, so offer sign-up with it filled in. */
+  const signUpWithPhone = (phone: string) => {
+    setSignupPhone(phone);
+    setMode("signup");
+    setSwitchNotice(null);
+    setNotice(t("auth.otpCreateNotice"));
   };
 
   const emailId = useId();
@@ -146,15 +189,34 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
   // A fresh error from the submitted form always wins over the carried-over
   // "that email is taken" explanation.
   const shownError =
-    mode === "signin" ? (inState.error ?? switchNotice ?? undefined) : upState.error;
+    mode === "signin"
+      ? method === "otp"
+        ? undefined
+        : (inState.error ?? switchNotice ?? undefined)
+      : upState.error;
+
+  const otpVisible = mode === "signin" && method === "otp" && otpEnabled;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-6 px-5 py-10">
       <header className="flex flex-col items-center gap-3 text-center">
         <Brand />
-        <h1 className="text-2xl font-bold text-fg">{t("auth.title")}</h1>
+        {/*
+         * "Welcome back" is copy for someone who already has a streak to
+         * protect — the page cannot know that in advance (nobody has typed an
+         * email yet), but the tab they picked is a real, honest signal: Sign
+         * in is for a returning account, Create account is for someone who
+         * has never used the app. Tying the header to that, rather than
+         * showing "Welcome back" unconditionally, stops a brand-new visitor
+         * being told to protect progress they don't have yet.
+         */}
+        <h1 className="text-2xl font-bold text-fg">
+          {account ? t("auth.title") : t(mode === "signup" ? "auth.signupTitle" : "auth.title")}
+        </h1>
         <p className="text-sm text-muted">
-          {account ? t("auth.languageHere") : t("auth.subtitle")}
+          {account
+            ? t("auth.languageHere")
+            : t(mode === "signup" ? "auth.signupSubtitle" : "auth.subtitle")}
         </p>
       </header>
 
@@ -250,6 +312,15 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
           ))}
         </div>
 
+        {googleError && (
+          <p
+            role="alert"
+            className="rounded-card bg-danger-soft px-4 py-3 text-sm font-medium text-danger"
+          >
+            {t("auth.errors.googleFailed")}
+          </p>
+        )}
+
         {shownError && (
           <p
             role="alert"
@@ -267,6 +338,15 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
           </p>
         )}
 
+        {otpVisible ? (
+          <OtpSignIn
+            key={otpPhone ?? ""}
+            language={language}
+            next={next}
+            defaultPhone={otpPhone}
+            onUnknownPhone={signUpWithPhone}
+          />
+        ) : (
         <form
           ref={formRef}
           action={mode === "signin" ? inAction : upAction}
@@ -322,7 +402,7 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
                 type="tel"
                 inputMode="tel"
                 autoComplete="tel"
-                defaultValue={prefill?.phone}
+                defaultValue={prefill?.phone ?? signupPhone}
                 placeholder="98765 43210"
               />
             </Field>
@@ -384,6 +464,19 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
               : t(mode === "signin" ? "auth.submitSignIn" : "auth.submitSignUp")}
           </Button>
         </form>
+        )}
+
+        {/* The other way in. A toggle rather than a third tab: "Sign in" is
+            still one thing, it just has two ways to prove who you are. */}
+        {mode === "signin" && otpEnabled && (
+          <button
+            type="button"
+            onClick={() => setMethod((m) => (m === "otp" ? "password" : "otp"))}
+            className="min-h-11 text-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {t(method === "otp" ? "auth.usePassword" : "auth.useOtp")}
+          </button>
+        )}
 
         {showDemo && mode === "signin" && (
           <div className="flex flex-col gap-2 rounded-card border border-dashed border-border bg-surface-2 p-4">
@@ -396,10 +489,23 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
             <Button variant="secondary" onClick={fillDemo} full>
               Fill demo login
             </Button>
+            {showDemoOtp && (
+              <>
+                <p className="pt-2 text-sm font-semibold text-fg">{t("auth.demoOtp")}</p>
+                <p className="font-mono text-sm text-muted">
+                  {demoPhone}
+                  <br />
+                  OTP {demoOtp}
+                </p>
+                <Button variant="secondary" onClick={fillDemoOtp} full>
+                  {t("auth.fillDemoOtp")}
+                </Button>
+              </>
+            )}
           </div>
         )}
 
-        {mode === "signin" && (
+        {mode === "signin" && method === "password" && (
           <Link
             href="/forgot"
             className="text-center text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -407,14 +513,32 @@ export function LoginScreen({ account }: { account?: LoginAccount | null }) {
             {t("auth.forgot")}
           </Link>
         )}
+
+        {/* Last, deliberately: this is the alternative, not the headline
+            option, whichever tab is open — Sign in finds the account, Create
+            account makes one, either way with no password to set or remember. */}
+        {googleEnabled && (
+          <>
+            <div className="flex items-center gap-3 text-xs font-medium text-muted">
+              <span className="h-px flex-1 bg-border" />
+              {t("auth.orDivider")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <a
+              href="/api/auth/google"
+              className={cn(
+                buttonClasses({ variant: "secondary", size: "lg", full: true }),
+                "gap-3",
+              )}
+            >
+              <GoogleIcon className="size-5" />
+              {t("auth.continueWithGoogle")}
+            </a>
+          </>
+        )}
       </Card>
       )}
 
-      {/* Phone + OTP sign-in is scheduled, not built. Saying so is better than
-          showing a button that does nothing. */}
-      {!account && (
-        <p className="text-center text-xs text-muted">{t("auth.otpSoon")}</p>
-      )}
     </main>
   );
 }
