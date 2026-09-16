@@ -3,7 +3,10 @@ import { headers } from "next/headers";
 import { Fraunces, Inter } from "next/font/google";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ServiceWorker } from "@/components/ServiceWorker";
-import "./globals.css";
+// theme.css, not globals.css: renamed on purpose. Vercel's persistent Turbopack
+// build cache once served a stale compiled copy of this file (new components,
+// old tokens) after a token-only change; a new module path cannot hit that cache.
+import "./theme.css";
 
 const inter = Inter({
   subsets: ["latin", "latin-ext"],
