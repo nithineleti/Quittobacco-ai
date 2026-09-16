@@ -12,6 +12,7 @@ import { IconTile, type TileHue } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { ThemeSetting } from "@/components/feature/ThemeSetting";
 import { BADGE_META } from "@/data/badges";
 import { loc, type Language } from "@/data/types";
 import { LANGUAGES } from "@/i18n/languages";
@@ -223,9 +224,13 @@ export function ProfileScreen({
         )}
       </Card>
 
+      {/* Light or dark, remembered on this phone — see lib/theme.ts. */}
+      <ThemeSetting />
+
       {/* Actions */}
       <Card className="flex flex-col divide-y divide-border p-0">
         <ProfileLink href="/reports" icon="FileText" hue="sky" label={t("profile.reports")} />
+        <ProfileLink href="/onboarding?retake=1" icon="ClipboardList" hue="amber" label={t("profile.retake")} />
         <ProfileRow icon="Users" hue="pink" label={t("profile.supporter")} onClick={doShare} />
         <ProfileRow icon="Download" hue="violet" label={t("profile.export")} onClick={exportData} />
         <ProfileLink href="/help" icon="LifeBuoy" hue="rose" label={t("profile.help")} />

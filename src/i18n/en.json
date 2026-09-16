@@ -447,7 +447,10 @@
     "copy": "Copy",
     "copied": "Copied!",
     "reports": "My reports",
-    "adminPanel": "Admin panel"
+    "adminPanel": "Admin panel",
+    "themeHelp": "Light or dark — or let the phone decide.",
+    "retake": "Retake the questionnaire",
+    "retakeHelp": "Answer the intake questions again. Your streak and rewards are kept."
   },
   "share": {
     "streakText": "I'm {{days}} days tobacco-free with QuitTobacco 🌱",

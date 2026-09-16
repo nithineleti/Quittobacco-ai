@@ -161,13 +161,21 @@ function Stepper({
 
 // ---- flow ------------------------------------------------------------------
 
-export function OnboardingFlow() {
+export function OnboardingFlow({ retake = false }: {
+  /**
+   * Re-running the questionnaire from Profile. The intro slides are skipped
+   * and the existing quit date is kept — a retake updates the answers and
+   * scores, it must not restart the streak or drop the rewards earned on it.
+   */
+  retake?: boolean;
+}) {
   const router = useRouter();
   const { t } = useTranslation();
   const lang = useStore((s) => s.language);
+  const quitDate = useStore((s) => s.quitDate);
   const completeIntake = useStore((s) => s.completeIntake);
 
-  const [phase, setPhase] = useState<Phase>("intro");
+  const [phase, setPhase] = useState<Phase>(retake ? "form" : "intro");
   const [intro, setIntro] = useState(0);
   const [step, setStep] = useState(0);
   const [a, setA] = useState<Partial<IntakeAnswers>>({ triggers: [], motivation: 5 });
@@ -224,7 +232,7 @@ export function OnboardingFlow() {
       motivation: a.motivation ?? 5,
       triggers: a.triggers ?? [],
     };
-    const summary = completeIntake(answers);
+    const summary = completeIntake(answers, retake ? quitDate : undefined);
     const info = currentBadge(summary.startingTier, {
       daysFree: 0,
       videosCompleted: 0,

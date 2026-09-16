@@ -19,9 +19,9 @@
 :root {
   color-scheme: light;
 
-  --surface: #f5f1e8;      /* warm paper page background */
+  --surface: #f7f5f0;      /* warm-white page background */
   --surface-2: #ebe5d8;    /* subtly raised / muted fill */
-  --card: #fffdf8;
+  --card: #ffffff;
   --fg: #1c1a16;           /* ink — text colour #1 */
   --muted: #6f685c;        /* faded ink — text colour #2 */
   --border: #dfd7c8;       /* hairline */
@@ -92,9 +92,9 @@
 .dark {
   color-scheme: dark;
 
-  --surface: #171512;
-  --surface-2: #24211c;
-  --card: #1e1b17;
+  --surface: #121110;
+  --surface-2: #232120;
+  --card: #1a1917;
   --fg: #f1ebe0;
   --muted: #a69f91;
   --border: #35302a;

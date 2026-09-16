@@ -39,8 +39,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f1e8" },
-    { media: "(prefers-color-scheme: dark)", color: "#171512" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f5f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#121110" },
   ],
   colorScheme: "light dark",
   width: "device-width",
@@ -49,10 +49,11 @@ export const viewport: Viewport = {
 };
 
 /**
- * Theme always follows the OS. Runs before first paint (no flash) and keeps the
- * <html> class in sync live when the system switches light/dark.
+ * Theme: a saved preference (qt-theme = light|dark) wins, otherwise the OS.
+ * Runs before first paint (no flash) and keeps the <html> class in sync live
+ * when the system switches. Mirrors src/lib/theme.ts exactly.
  */
-const themeScript = `(function(){try{var m=window.matchMedia('(prefers-color-scheme: dark)');var e=document.documentElement;var a=function(){e.classList.toggle('dark',m.matches);e.style.colorScheme=m.matches?'dark':'light';};a();m.addEventListener('change',a);}catch(e){}})();`;
+const themeScript = `(function(){try{var m=window.matchMedia('(prefers-color-scheme: dark)');var e=document.documentElement;var a=function(){var p=null;try{p=localStorage.getItem('qt-theme')}catch(x){}var d=p==='dark'||(p!=='light'&&m.matches);e.classList.toggle('dark',d);e.style.colorScheme=d?'dark':'light';};a();m.addEventListener('change',a);}catch(e){}})();`;
 
 export default async function RootLayout({
   children,
