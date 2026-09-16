@@ -455,7 +455,7 @@ src/
 ```
 
 **Rules honoured:** server components by default (`'use client'` at the smallest leaf);
-no raw hex or raw Tailwind palette classes outside `globals.css`; design tokens drive
+no raw hex or raw Tailwind palette classes outside `theme.css`; design tokens drive
 light + dark; every visible control works end to end.
 
 ### Design system

@@ -15,7 +15,7 @@ const inter = Inter({
 });
 
 // The display face. Variable axes (opsz, SOFT) are what give the big streak
-// numeral its slightly soft, printed look — see font-display in globals.css.
+// numeral its slightly soft, printed look — see font-display in theme.css.
 const fraunces = Fraunces({
   subsets: ["latin"],
   display: "swap",
