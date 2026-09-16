@@ -80,21 +80,21 @@ export function DashboardScreen({ unreadReports = 0 }: { unreadReports?: number 
         </Link>
       </header>
 
-      {/* Hero — the streak, on the one gradient surface of the screen. */}
-      <div className="flex items-center justify-between gap-4 rounded-card bg-brand-gradient p-5 shadow-float">
+      {/* Hero — the streak, set like a headline on paper. */}
+      <div className="flex items-center justify-between gap-4 rounded-card border border-border bg-card p-5">
         <div className="min-w-0">
-          <p className="text-sm font-medium opacity-90">{t("dashboard.streakLabel")}</p>
+          <p className="text-sm text-muted">{t("dashboard.streakLabel")}</p>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-6xl font-bold leading-none tabular-nums">{streak}</span>
-            <span className="text-xl font-semibold">{t("dashboard.days", { count: streak })}</span>
+            <span className="font-display text-7xl font-medium leading-none tabular-nums text-fg">{streak}</span>
+            <span className="font-display text-2xl text-fg">{t("dashboard.days", { count: streak })}</span>
           </div>
-          <p className="mt-2 text-sm opacity-90">{t("dashboard.totalFree", { count: total })}</p>
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-pill bg-white/20 px-3 py-1 text-xs font-bold">
+          <p className="mt-2 text-sm text-muted">{t("dashboard.totalFree", { count: total })}</p>
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-pill bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">
             <Icon name="HeartPulse" className="size-3.5" />
             {t("dashboard.recovery")} · {rec}%
           </p>
         </div>
-        <RecoveryRing percent={rec} size={108} label={t("dashboard.recovery")} />
+        <RecoveryRing percent={rec} size={108} label={t("dashboard.recovery")} className="text-accent" />
       </div>
 
       {/* Something new from the clinic gets top billing, above the check-in. */}

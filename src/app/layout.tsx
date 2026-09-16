@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
-import { Inter } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
@@ -9,6 +9,15 @@ const inter = Inter({
   subsets: ["latin", "latin-ext"],
   display: "swap",
   variable: "--font-inter",
+});
+
+// The display face. Variable axes (opsz, SOFT) are what give the big streak
+// numeral its slightly soft, printed look — see font-display in globals.css.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-fraunces",
+  axes: ["opsz", "SOFT"],
 });
 
 export const metadata: Metadata = {
@@ -27,8 +36,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f3fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f0e1f" },
+    { media: "(prefers-color-scheme: light)", color: "#f5f1e8" },
+    { media: "(prefers-color-scheme: dark)", color: "#171512" },
   ],
   colorScheme: "light dark",
   width: "device-width",
@@ -55,7 +64,7 @@ export default async function RootLayout({
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh antialiased">
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
         <I18nProvider>{children}</I18nProvider>

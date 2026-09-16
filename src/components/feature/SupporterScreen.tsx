@@ -31,7 +31,7 @@ export function SupporterScreen() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6 py-10">
       <Brand className="self-center" />
 
-      <div className="flex flex-col items-center gap-3 rounded-card bg-brand-gradient p-6 text-center shadow-float">
+      <div className="flex flex-col items-center gap-3 rounded-card border border-border bg-card p-6 text-center">
         <RecoveryRing
           percent={recoveryPercent(days)}
           size={120}

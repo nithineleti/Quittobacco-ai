@@ -6,12 +6,12 @@
 /* ------------------------------------------------------------------ *
  * Design tokens — the ONLY place raw color values live.
  *
- * The palette is a fresh-start theme: indigo-violet as the one brand hue,
- * a warm sunrise gradient for the moments that deserve it (streak hero,
- * primary action), and eight tinted "tile" hues so every feature gets its
- * own recognisable colour — the visual grammar first-time smartphone users
- * already know from UPI and delivery apps. Nothing here is green or leafy
- * on purpose: the app is about the life after tobacco, not the plant.
+ * The look is "quiet editorial": warm paper, ink, and one terracotta
+ * accent, set in a serif display face. Nothing glows, nothing is
+ * gradient-filled, and icons are monochrome — the calm of a well-set
+ * page, which is also what makes the app feel unlike every other one on
+ * the phone. Colour is spent only where it carries meaning: the accent for
+ * the current place and the SOS button, green/amber/red for outcomes.
  *
  * Every text/background pair below is WCAG-AA verified in both themes.
  * Semantic names only. Components never use raw hex or palette classes.
@@ -19,124 +19,137 @@
 :root {
   color-scheme: light;
 
-  --surface: #f4f3fb;      /* lavender-tinted near-white page background */
-  --surface-2: #ebe9f5;    /* subtly raised / muted fill */
-  --card: #ffffff;
-  --fg: #17162b;           /* ink — text colour #1 */
-  --muted: #5f5c7a;        /* muted violet-grey — text colour #2 */
-  --border: #e4e2f0;       /* hairline */
+  --surface: #f5f1e8;      /* warm paper page background */
+  --surface-2: #ebe5d8;    /* subtly raised / muted fill */
+  --card: #fffdf8;
+  --fg: #1c1a16;           /* ink — text colour #1 */
+  --muted: #6f685c;        /* faded ink — text colour #2 */
+  --border: #dfd7c8;       /* hairline */
 
-  --primary: #5b47f0;      /* the one brand hue: indigo-violet */
-  --primary-fg: #ffffff;
-  --primary-soft: #ebe8ff;
+  /* "Primary" is ink itself: the main action on a screen is set in ink on
+   * paper, the way a heading is. The accent stays free for meaning. */
+  --primary: #1c1a16;
+  --primary-fg: #f5f1e8;
+  --primary-soft: #ebe5d8;
 
-  --success: #0f8a5f;
+  --accent: #b9542e;       /* terracotta — the one colour */
+  --accent-fg: #fff7f1;
+  --accent-soft: #f6e3da;
+
+  --success: #2f6b45;
   --success-fg: #ffffff;
-  --success-soft: #e2f6ec;
-  --warning: #9a5b00;
+  --success-soft: #e3eee6;
+  --warning: #8a5a12;
   --warning-fg: #ffffff;
-  --warning-soft: #fdf0d8;
-  --alert: #c2410c;        /* orange — the "high" step */
+  --warning-soft: #f5eadb;
+  --alert: #b4552a;
   --alert-fg: #ffffff;
-  --alert-soft: #fee7d9;
-  --danger: #d9204a;
+  --alert-soft: #f6e3da;
+  --danger: #b23a3a;
   --danger-fg: #ffffff;
-  --danger-soft: #fde4ea;
+  --danger-soft: #f6e1e1;
 
-  --gold: #8f5d00;         /* gold as text on light surfaces */
-  --gold-fill: #f7b731;    /* the reward accent — badges/rewards ONLY */
-  --gold-fg: #2a1d05;      /* dark text on gold fill (both themes) */
-  --gold-soft: #fff2cf;
+  --gold: #7d5f16;         /* gold as text on light surfaces */
+  --gold-fill: #d9b45a;    /* the reward accent — badges/rewards ONLY */
+  --gold-fg: #2a2008;
+  --gold-soft: #f4ecd6;
 
   /* Badge-tier metals — reward surface only. Dark fg on each is AA-verified. */
-  --tier-bronze: #c6803f;
+  --tier-bronze: #c08454;
   --tier-bronze-fg: #2a1808;
-  --tier-silver: #9ba7b3;
+  --tier-silver: #aeb4b8;
   --tier-silver-fg: #1b1f24;
-  --tier-gold: #f2b02e;
+  --tier-gold: #d9b45a;
   --tier-gold-fg: #2a2008;
-  --tier-platinum: #aebdc8;
+  --tier-platinum: #c3cbd1;
   --tier-platinum-fg: #16222c;
-  --tier-diamond: #5fcbe2;
+  --tier-diamond: #9fd3df;
   --tier-diamond-fg: #06313b;
 
-  /* Feature tiles: soft pastel fill + deep icon colour. Eight hues so
-   * neighbouring tiles never share one. */
-  --tile-violet: #ebe8ff;   --tile-violet-fg: #4c38d6;
-  --tile-sky: #e0f0ff;      --tile-sky-fg: #0b63b8;
-  --tile-emerald: #dcf7ea;  --tile-emerald-fg: #0b7a50;
-  --tile-amber: #fff1cc;    --tile-amber-fg: #935700;
-  --tile-rose: #ffe3ea;     --tile-rose-fg: #c2184a;
-  --tile-orange: #ffe8d6;   --tile-orange-fg: #bf4a05;
-  --tile-teal: #d8f5f3;     --tile-teal-fg: #086f6a;
-  --tile-pink: #fce4f6;     --tile-pink-fg: #b0208a;
+  /* Feature tiles are deliberately ONE look: a paper square with an ink
+   * icon. The names survive so call sites need not change, but the page
+   * no longer reads as a box of crayons. The "gradient" tile is the accent. */
+  --tile-violet: var(--surface-2);  --tile-violet-fg: var(--fg);
+  --tile-sky: var(--surface-2);     --tile-sky-fg: var(--fg);
+  --tile-emerald: var(--surface-2); --tile-emerald-fg: var(--fg);
+  --tile-amber: var(--surface-2);   --tile-amber-fg: var(--fg);
+  --tile-rose: var(--surface-2);    --tile-rose-fg: var(--fg);
+  --tile-orange: var(--surface-2);  --tile-orange-fg: var(--fg);
+  --tile-teal: var(--surface-2);    --tile-teal-fg: var(--fg);
+  --tile-pink: var(--surface-2);    --tile-pink-fg: var(--fg);
 
-  /* The sunrise gradient — hero card, primary button, brand mark. */
-  --gradient-brand: linear-gradient(135deg, #5b47f0 0%, #8b5cf6 55%, #ec4899 100%);
-  /* SOS is the one thing that must read as "different" from everything else. */
-  --gradient-sos: linear-gradient(135deg, #f43f5e 0%, #f97316 100%);
-  /* Text on either gradient. */
-  --on-gradient: #ffffff;
+  /* Flat fills. Kept as "gradient" tokens so the utilities below still
+   * apply — but a gradient of one colour is a solid, and that is the point. */
+  --gradient-brand: linear-gradient(var(--primary), var(--primary));
+  --gradient-sos: linear-gradient(var(--accent), var(--accent));
+  --on-gradient: var(--primary-fg);
 
-  --ring: #5b47f0;
-  --shadow-float: 0 12px 32px -14px rgb(91 71 240 / 0.45);
-  --shadow-card: 0 1px 2px rgb(23 22 43 / 0.04), 0 6px 20px -10px rgb(23 22 43 / 0.10);
+  --ring: #b9542e;
+  --shadow-float: 0 1px 0 rgb(28 26 22 / 0.06);
+  --shadow-card: none;
 }
 
 .dark {
   color-scheme: dark;
 
-  --surface: #0f0e1f;
-  --surface-2: #1a1832;
-  --card: #171531;
-  --fg: #f2f1fb;
-  --muted: #a6a3c6;
-  --border: #2a2747;
+  --surface: #171512;
+  --surface-2: #24211c;
+  --card: #1e1b17;
+  --fg: #f1ebe0;
+  --muted: #a69f91;
+  --border: #35302a;
 
-  --primary: #9d8cff;
-  --primary-fg: #140f3a;
-  --primary-soft: #26215a;
+  --primary: #f1ebe0;
+  --primary-fg: #171512;
+  --primary-soft: #2a2620;
 
-  --success: #34d399;
-  --success-fg: #04231a;
-  --success-soft: #123329;
-  --warning: #fbbf24;
+  --accent: #e07a52;
+  --accent-fg: #1e0f08;
+  --accent-soft: #3a2218;
+
+  --success: #7dbb95;
+  --success-fg: #07200f;
+  --success-soft: #1e2f24;
+  --warning: #dcae5c;
   --warning-fg: #231a04;
-  --warning-soft: #2f2508;
-  --alert: #fb923c;
+  --warning-soft: #33290f;
+  --alert: #e08a63;
   --alert-fg: #241206;
-  --alert-soft: #331a0a;
-  --danger: #fb7185;
-  --danger-fg: #2a0a10;
-  --danger-soft: #3a1220;
+  --alert-soft: #3a2218;
+  --danger: #e08080;
+  --danger-fg: #2a0a0a;
+  --danger-soft: #3a1c1c;
 
-  --gold: #fcd34d;
-  --gold-fill: #f7b731;
-  --gold-fg: #2a1d05;
-  --gold-soft: #2f2610;
+  --gold: #e2c476;
+  --gold-fill: #d9b45a;
+  --gold-fg: #2a2008;
+  --gold-soft: #2f2812;
 
-  --tile-violet: #2a2466;   --tile-violet-fg: #c4b8ff;
-  --tile-sky: #12305a;      --tile-sky-fg: #8cc8ff;
-  --tile-emerald: #0f3b2c;  --tile-emerald-fg: #6ee7b7;
-  --tile-amber: #3b2a05;    --tile-amber-fg: #fcd34d;
-  --tile-rose: #44142a;     --tile-rose-fg: #fda4bf;
-  --tile-orange: #3f1e0a;   --tile-orange-fg: #fdba74;
-  --tile-teal: #0d3634;     --tile-teal-fg: #5eead4;
-  --tile-pink: #3d1236;     --tile-pink-fg: #f9a8d4;
+  --tile-violet: var(--surface-2);  --tile-violet-fg: var(--fg);
+  --tile-sky: var(--surface-2);     --tile-sky-fg: var(--fg);
+  --tile-emerald: var(--surface-2); --tile-emerald-fg: var(--fg);
+  --tile-amber: var(--surface-2);   --tile-amber-fg: var(--fg);
+  --tile-rose: var(--surface-2);    --tile-rose-fg: var(--fg);
+  --tile-orange: var(--surface-2);  --tile-orange-fg: var(--fg);
+  --tile-teal: var(--surface-2);    --tile-teal-fg: var(--fg);
+  --tile-pink: var(--surface-2);    --tile-pink-fg: var(--fg);
 
-  --gradient-brand: linear-gradient(135deg, #6d5cf6 0%, #a855f7 55%, #ec4899 100%);
-  --gradient-sos: linear-gradient(135deg, #fb4e6a 0%, #fb923c 100%);
-  --on-gradient: #ffffff;
+  --gradient-brand: linear-gradient(var(--primary), var(--primary));
+  --gradient-sos: linear-gradient(var(--accent), var(--accent));
+  --on-gradient: var(--primary-fg);
 
-  --ring: #9d8cff;
-  --shadow-float: 0 12px 32px -14px rgb(0 0 0 / 0.7);
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 6px 20px -10px rgb(0 0 0 / 0.5);
+  --ring: #e07a52;
+  --shadow-float: 0 1px 0 rgb(0 0 0 / 0.4);
+  --shadow-card: none;
 }
 
 /* Map tokens into Tailwind's theme. `inline` keeps utilities referencing the
  * CSS vars so .dark overrides propagate without regenerating utilities. */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* Headings and the big numerals. A serif is what makes the page read as
+   * a page, and it is the one thing no other app on the phone does. */
+  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
 
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -148,6 +161,10 @@
   --color-primary: var(--primary);
   --color-primary-fg: var(--primary-fg);
   --color-primary-soft: var(--primary-soft);
+
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
 
   --color-success: var(--success);
   --color-success-fg: var(--success-fg);
@@ -198,30 +215,31 @@
   --color-on-gradient: var(--on-gradient);
   --color-ring: var(--ring);
 
-  --radius-card: 1.25rem;
-  --radius-tile: 0.875rem;
+  /* Squarer than before: a printed page, not a bubble. */
+  --radius-card: 0.875rem;
+  --radius-tile: 0.5rem;
   --radius-pill: 999px;
 
   --shadow-float: var(--shadow-float);
   --shadow-card: var(--shadow-card);
 }
 
-/* Gradient fills are not expressible as a single --color token, so they get
- * their own utilities. Both carry `color` too, so text inside is always
- * legible without a second class. */
+/* Flat fills — see the token comment. Both carry `color` too, so text
+ * inside is always legible without a second class. */
 @utility bg-brand-gradient {
   background-image: var(--gradient-brand);
   color: var(--on-gradient);
 }
 @utility bg-sos-gradient {
   background-image: var(--gradient-sos);
-  color: var(--on-gradient);
+  color: var(--accent-fg);
 }
 @utility text-brand-gradient {
-  background-image: var(--gradient-brand);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--fg);
+}
+@utility font-display {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 72, "SOFT" 30;
 }
 
 @layer base {
@@ -237,6 +255,13 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+  }
+  /* Every heading in the serif: one rule, the whole app reads as a page. */
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    font-variation-settings: "opsz" 72, "SOFT" 30;
   }
   /* Visible focus for keyboard users on every interactive element. */
   :focus-visible {

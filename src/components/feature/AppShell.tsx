@@ -60,13 +60,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-tile text-[0.7rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-                    active ? "text-primary" : "text-muted hover:text-fg",
+                    active ? "text-accent" : "text-muted hover:text-fg",
                   )}
                 >
                   <span
                     className={cn(
                       "grid h-8 w-14 place-items-center rounded-pill transition-colors",
-                      active && "bg-primary-soft",
+                      active && "bg-accent-soft",
                     )}
                   >
                     <Icon

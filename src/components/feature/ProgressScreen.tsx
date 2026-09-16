@@ -135,14 +135,14 @@ export function ProgressScreen() {
 
       {tab === "overview" && (
         <>
-          <div className="flex items-center gap-4 rounded-card bg-brand-gradient p-5 shadow-float">
-            <RecoveryRing percent={rec} size={96} stroke={9} label={t("progress.recoveryTitle")} />
+          <div className="flex items-center gap-4 rounded-card border border-border bg-card p-5">
+            <RecoveryRing percent={rec} size={96} stroke={9} label={t("progress.recoveryTitle")} className="text-accent" />
             <div className="min-w-0">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-4xl font-bold tabular-nums">{total}</span>
-                <span className="text-base font-semibold">{t("progress.totalDays")}</span>
+                <span className="font-display text-5xl font-medium leading-none tabular-nums text-fg">{total}</span>
+                <span className="font-display text-lg text-fg">{t("progress.totalDays")}</span>
               </div>
-              <p className="mt-1 text-sm opacity-90">{t("progress.recoveryTitle")} · {rec}%</p>
+              <p className="mt-1 text-sm text-muted">{t("progress.recoveryTitle")} · {rec}%</p>
             </div>
           </div>
 

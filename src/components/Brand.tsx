@@ -1,10 +1,9 @@
-import { Sunrise } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 /**
- * The brand mark: a sunrise on the brand gradient. A new day, not a plant —
- * the app is about the life after tobacco, and the old leaf read as the
- * thing people are trying to leave behind. Matches app/icon.svg.
+ * The brand mark: a ring with a full stop inside it — the day you stopped.
+ * Ink and one dot of the accent, nothing else, so it sits quietly next to a
+ * serif wordmark. Matches app/icon.svg.
  */
 export function Brand({
   className,
@@ -15,11 +14,16 @@ export function Brand({
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-tile bg-brand-gradient shadow-float">
-        <Sunrise className="size-6" strokeWidth={2.25} aria-hidden />
+      <span
+        className="grid size-9 shrink-0 place-items-center rounded-pill border-2 border-fg"
+        aria-hidden
+      >
+        <span className="size-2.5 rounded-pill bg-accent" />
       </span>
       {!iconOnly && (
-        <span className="text-lg font-bold tracking-tight text-fg">QuitTobacco</span>
+        <span className="font-display text-xl font-medium tracking-tight text-fg">
+          QuitTobacco
+        </span>
       )}
     </span>
   );
