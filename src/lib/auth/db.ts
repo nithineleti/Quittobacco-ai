@@ -133,8 +133,12 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT fal
 -- in the schema that runs on every cold start.
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 
--- Reserved for the OTP work (phone sign-in, e-mailed password reset). The
--- table exists now so adding delivery later is a feature, not a migration.
+-- When the user last proved they hold users.phone: by signing in with an OTP,
+-- or by confirming a code from Profile. NULL for a number typed at sign-up
+-- and never used since — it is still stored, just not trusted for anything.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ;
+
+-- One-time codes: phone sign-in, phone verification, e-mailed password reset.
 CREATE TABLE IF NOT EXISTS auth_tokens (
   id          TEXT PRIMARY KEY,
   user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -145,6 +149,11 @@ CREATE TABLE IF NOT EXISTS auth_tokens (
   consumed_at TIMESTAMPTZ,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- What the code is FOR, when that isn't implied by the user: a phone
+-- verification carries the number being verified, so a code sent to one
+-- number can't confirm a different one typed later.
+ALTER TABLE auth_tokens ADD COLUMN IF NOT EXISTS payload TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_tokens_user ON auth_tokens(user_id, purpose);
 -- Reset links are looked up by their hash, so that lookup must be indexed.
@@ -292,6 +301,8 @@ export interface UserRow {
   id: string;
   email: string;
   phone: string | null;
+  /** Set once the user has proven they hold `phone` — see otp.ts. */
+  phone_verified_at: string | null;
   /** Null for an account created via Google — see google.ts. */
   password_hash: string | null;
   display_name: string | null;
@@ -312,6 +323,7 @@ export interface AuthTokenRow {
   code_hash: string;
   expires_at: string;
   consumed_at: string | null;
+  payload: string | null;
 }
 
 /** Postgres error code for a unique-constraint violation. */
@@ -447,6 +459,7 @@ export interface AdminUserRow {
   email: string;
   display_name: string | null;
   phone: string | null;
+  phone_verified_at: string | null;
   language: string;
   is_admin: boolean;
   created_at: string;
@@ -458,8 +471,8 @@ export interface AdminUserRow {
 }
 
 const ADMIN_USER_SELECT = `
-  SELECT u.id, u.patient_no, u.email, u.display_name, u.phone, u.language,
-         u.is_admin, u.created_at, u.last_login_at,
+  SELECT u.id, u.patient_no, u.email, u.display_name, u.phone, u.phone_verified_at,
+         u.language, u.is_admin, u.created_at, u.last_login_at,
          s.updated_at AS synced_at, s.state,
          (SELECT count(*) FROM patient_documents d WHERE d.user_id = u.id)::int AS documents
     FROM users u
@@ -544,6 +557,32 @@ export async function deleteUserState(userId: string): Promise<void> {
   await query("DELETE FROM user_state WHERE user_id = $1", [userId]);
 }
 
+/**
+ * Sets (or clears) the mobile number. `verified` is true only when the caller
+ * has just checked a code sent to that exact number — never for a number
+ * merely typed into a form.
+ */
+export async function setPhone(
+  id: string,
+  phone: string | null,
+  verified: boolean,
+): Promise<void> {
+  await query(
+    `UPDATE users
+        SET phone = $2,
+            phone_verified_at = CASE WHEN $2::text IS NULL THEN NULL
+                                     WHEN $3::boolean THEN now()
+                                     ELSE phone_verified_at END
+      WHERE id = $1`,
+    [id, phone, verified],
+  );
+}
+
+/** Signing in with an OTP is itself proof of holding the number. */
+export async function markPhoneVerified(id: string): Promise<void> {
+  await query("UPDATE users SET phone_verified_at = now() WHERE id = $1", [id]);
+}
+
 /** Language is account-level, so the choice follows the user to a new device. */
 export async function updateUserLanguage(
   id: string,
@@ -577,6 +616,8 @@ export async function deleteUser(id: string): Promise<void> {
 export const RESET_PURPOSE = "password_reset";
 /** One-time sign-in code texted to `users.phone` — see otp.ts. */
 export const OTP_PURPOSE = "phone_otp";
+/** Code texted to a NEW number from Profile; `payload` holds that number. */
+export const PHONE_VERIFY_PURPOSE = "phone_verify";
 
 export async function createAuthToken(input: {
   id: string;
@@ -585,10 +626,11 @@ export async function createAuthToken(input: {
   channel: string;
   codeHash: string;
   expiresAt: Date;
+  payload?: string;
 }): Promise<void> {
   await query(
-    `INSERT INTO auth_tokens (id, user_id, purpose, channel, code_hash, expires_at)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+    `INSERT INTO auth_tokens (id, user_id, purpose, channel, code_hash, expires_at, payload)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [
       input.id,
       input.userId,
@@ -596,6 +638,7 @@ export async function createAuthToken(input: {
       input.channel,
       input.codeHash,
       input.expiresAt.toISOString(),
+      input.payload ?? null,
     ],
   );
 }

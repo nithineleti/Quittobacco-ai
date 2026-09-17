@@ -264,7 +264,17 @@ export function BackendDashboard({
                       </div>
                       <div className="text-xs text-muted">{u.email}</div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-2 text-muted">{u.phone ?? "—"}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-muted">
+                      {u.phone ?? "—"}
+                      {u.phone && (
+                        <span
+                          className={u.phone_verified_at ? "ml-1 text-success" : "ml-1"}
+                          title={u.phone_verified_at ? "verified" : "not verified"}
+                        >
+                          {u.phone_verified_at ? "✓" : "?"}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-3 py-2 uppercase text-muted">{u.language}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-muted">{when(u.created_at)}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-muted">{when(u.last_login_at)}</td>

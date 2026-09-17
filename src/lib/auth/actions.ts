@@ -12,9 +12,11 @@ import {
   findUserByPhone,
   isUniqueViolation,
   logLoginEvent,
+  markPhoneVerified,
   normalizeEmail,
   recordLogin,
   resetLoginAttempts,
+  setPhone,
   updateUserLanguage,
 } from "@/lib/auth/db";
 import { isDemoEmail } from "@/lib/auth/demo";
@@ -28,8 +30,11 @@ import {
   OTP_LENGTH,
   OTP_TTL_MINUTES,
   burnOtp,
+  burnPhoneVerification,
   checkOtp,
+  checkPhoneVerification,
   issueOtp,
+  issuePhoneVerification,
   normalizeOtpInput,
 } from "@/lib/auth/otp";
 import {
@@ -495,6 +500,8 @@ export async function verifyOtp(
 
   await resetLoginAttempts(throttleKey);
   await resetLoginAttempts(`otp-send:${phone}`);
+  // Receiving the code IS proof of holding the number.
+  if (!user.phone_verified_at) await markPhoneVerified(user.id);
   await recordLogin(user.id, language);
   await logLoginEvent({
     userId: user.id,
@@ -512,6 +519,128 @@ export async function verifyOtp(
   });
 
   redirect(safeNext(formData.get("next")));
+}
+
+// ------------------------------------------- verify a number from Profile ---
+
+export interface PhoneState {
+  error?: string;
+  fieldErrors?: Partial<Record<"phone" | "code", string>>;
+  values?: { phone?: string };
+  sent?: boolean;
+  sentTo?: string;
+  sentToLabel?: string;
+  /** Development only — see revealsOtp(). */
+  devCode?: string;
+  /** The number is now on the account and verified. */
+  done?: boolean;
+}
+
+/**
+ * Sends a code to a number the signed-in user wants on their account — a
+ * new one, or the unverified one typed at sign-up. Shares throttle keys with
+ * sign-in, since it is the same phone being texted either way.
+ */
+export async function requestPhoneVerification(
+  _prev: PhoneState | undefined,
+  formData: FormData,
+): Promise<PhoneState> {
+  const session = await readSession();
+  if (!session) redirect("/login");
+
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const values = { phone: phoneRaw };
+  if (!phoneRaw) return { values, fieldErrors: { phone: "auth.errors.phoneRequired" } };
+  const phone = normalizePhone(phoneRaw);
+  if (!phone) return { values, fieldErrors: { phone: "auth.errors.phoneInvalid" } };
+
+  // Someone else's number — verified or not — cannot be moved onto this
+  // account from here. (The sign-up form already says when a number is taken.)
+  const holder = await findUserByPhone(phone);
+  if (holder && holder.id !== session.userId) {
+    return { values, fieldErrors: { phone: "auth.errors.phoneTaken" } };
+  }
+
+  if ((await bumpLoginAttempts(`otp-send:${phone}`, WINDOW_SECONDS)) > MAX_OTP_SENDS) {
+    return { values, error: "auth.errors.tooMany" };
+  }
+
+  const issued = await issuePhoneVerification(session.userId, phone);
+  if (!issued.demo) {
+    try {
+      const host = new URL(await baseUrl()).host;
+      await sendSms({ to: phone, body: otpSms(issued.code, OTP_TTL_MINUTES, host) });
+    } catch (err) {
+      console.error("Verification SMS failed", err);
+      return { values, error: "auth.errors.smsFailed" };
+    }
+  }
+
+  return {
+    sent: true,
+    sentTo: phone,
+    sentToLabel: formatPhone(phone),
+    values,
+    devCode: !issued.demo && revealsOtp() ? issued.code : undefined,
+  };
+}
+
+/** Checks the code; on success the number is saved on the account as verified. */
+export async function confirmPhoneVerification(
+  _prev: PhoneState | undefined,
+  formData: FormData,
+): Promise<PhoneState> {
+  const session = await readSession();
+  if (!session) redirect("/login");
+
+  const phoneRaw = String(formData.get("phone") ?? "").trim();
+  const code = normalizeOtpInput(String(formData.get("code") ?? ""));
+  const phone = normalizePhone(phoneRaw);
+  if (!phone) return { values: { phone: phoneRaw }, fieldErrors: { phone: "auth.errors.phoneInvalid" } };
+
+  const base: PhoneState = {
+    sent: true,
+    sentTo: phone,
+    sentToLabel: formatPhone(phone),
+    values: { phone: phoneRaw },
+  };
+  if (code.length !== OTP_LENGTH) {
+    return { ...base, fieldErrors: { code: "auth.errors.otpRequired" } };
+  }
+
+  const throttleKey = `otp-verify:${phone}`;
+  if ((await bumpLoginAttempts(throttleKey, WINDOW_SECONDS)) > MAX_OTP_GUESSES) {
+    await burnPhoneVerification(session.userId);
+    return { ...base, error: "auth.errors.tooMany" };
+  }
+
+  // The number comes back from the token, not the form: a code texted to
+  // one number can never confirm another.
+  const verified = await checkPhoneVerification(session.userId, code);
+  if (verified !== phone) {
+    return { ...base, fieldErrors: { code: "auth.errors.otpInvalid" } };
+  }
+
+  try {
+    await setPhone(session.userId, phone, true);
+  } catch (err) {
+    // Lost a race with someone registering the same number meanwhile.
+    if (isUniqueViolation(err, "phone")) {
+      return { ...base, error: "auth.errors.phoneTaken" };
+    }
+    throw err;
+  }
+
+  await resetLoginAttempts(throttleKey);
+  await resetLoginAttempts(`otp-send:${phone}`);
+  return { ...base, done: true };
+}
+
+/** Takes the number off the account; OTP sign-in stops working until one is added again. */
+export async function removePhone(): Promise<void> {
+  const session = await readSession();
+  if (!session) redirect("/login");
+  await setPhone(session.userId, null, false);
 }
 
 // --------------------------------------------------------- delete account ---

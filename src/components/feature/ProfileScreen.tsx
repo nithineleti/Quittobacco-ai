@@ -12,6 +12,8 @@ import { IconTile, type TileHue } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { PhoneSetting } from "@/components/feature/PhoneSetting";
+import { LookSetting } from "@/components/feature/LookSetting";
 import { ThemeSetting } from "@/components/feature/ThemeSetting";
 import { BADGE_META } from "@/data/badges";
 import { loc, type Language } from "@/data/types";
@@ -25,10 +27,15 @@ import { useHydrated, useStore } from "@/lib/store";
 
 export function ProfileScreen({
   patientCode,
+  phone,
+  phoneVerified = false,
   isAdmin = false,
 }: {
   /** "QT-000042" — the id a clinician looks up in the admin panel. */
   patientCode: string;
+  /** Mobile number on the account (E.164), or null. */
+  phone?: string | null;
+  phoneVerified?: boolean;
   isAdmin?: boolean;
 }) {
   const hydrated = useHydrated();
@@ -226,6 +233,10 @@ export function ProfileScreen({
 
       {/* Light or dark, remembered on this phone — see lib/theme.ts. */}
       <ThemeSetting />
+      <LookSetting />
+
+      {/* Mobile number for OTP sign-in — added, changed or verified by a texted code. */}
+      <PhoneSetting phone={phone ?? null} verified={phoneVerified} />
 
       {/* Actions */}
       <Card className="flex flex-col divide-y divide-border p-0">

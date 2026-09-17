@@ -402,8 +402,18 @@ so this leaks nothing new.
   check. An optional fixed-code demo number exists for client walkthroughs
   (`NEXT_PUBLIC_DEMO_PHONE` / `NEXT_PUBLIC_DEMO_OTP`).
 
-Not yet built: adding or changing a mobile number from Profile after sign-up,
-and accounts with a phone but no e-mail (`users.email` stays NOT NULL).
+**Verified numbers.** `users.phone_verified_at` records when the user last
+proved they hold the number — by signing in with an OTP, or by confirming a
+code from Profile. A number typed at sign-up is stored but unverified until
+then; Profile shows it as "Not verified" with a one-tap "Verify now". Profile
+also adds, changes and removes the number, and every change is confirmed by a
+code texted to the NEW number before it is saved (`requestPhoneVerification`
+/ `confirmPhoneVerification`). The number being verified travels on the token
+row (`auth_tokens.payload`), never trusted from the confirm form, so a code
+sent to one number can't confirm another. `/backend` marks each number ✓ or ?.
+
+Not yet built: accounts with a phone but no e-mail (`users.email` stays
+NOT NULL), and password reset by SMS (only e-mail today).
 
 ---
 

@@ -11,6 +11,8 @@ export default async function ProfilePage() {
   return (
     <ProfileScreen
       patientCode={formatPatientCode(user.patient_no)}
+      phone={user.phone}
+      phoneVerified={Boolean(user.phone_verified_at)}
       // Operators get a link to the admin panel. Everyone else never sees that
       // it exists — the route itself 404s for them either way.
       isAdmin={isAdminUser(user)}

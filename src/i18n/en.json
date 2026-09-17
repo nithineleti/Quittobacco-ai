@@ -416,6 +416,20 @@
     "title": "Profile",
     "language": "Language",
     "theme": "Theme",
+    "mobile": "Mobile number",
+    "mobileNone": "No number added",
+    "mobileVerified": "Verified",
+    "mobileUnverified": "Not verified",
+    "mobileHelp": "A verified number lets you sign in with a one-time code (OTP) instead of a password.",
+    "mobileAdd": "Add number",
+    "mobileChange": "Change number",
+    "mobileVerify": "Verify now",
+    "mobileRemove": "Remove",
+    "mobileSheetTitle": "Your mobile number",
+    "mobileSheetBody": "We'll text a 6-digit code to confirm the number is yours.",
+    "mobileConfirm": "Confirm number",
+    "mobileDone": "Your mobile number is verified. You can now sign in with an OTP.",
+    "mobileRemoveConfirm": "Remove this number from your account? OTP sign-in stops working until you add one again.",
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
@@ -450,7 +464,15 @@
     "adminPanel": "Admin panel",
     "themeHelp": "Light or dark — or let the phone decide.",
     "retake": "Retake the questionnaire",
-    "retakeHelp": "Answer the intake questions again. Your streak and rewards are kept."
+    "retakeHelp": "Answer the intake questions again. Your streak and rewards are kept.",
+    "look": "Look",
+    "lookHelp": "Four designs, same app. Pick the one you like.",
+    "looks": {
+      "paper": "Paper",
+      "mono": "Mono",
+      "ocean": "Ocean",
+      "plum": "Plum"
+    }
   },
   "share": {
     "streakText": "I'm {{days}} days tobacco-free with QuitTobacco 🌱",

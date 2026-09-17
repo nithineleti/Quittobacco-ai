@@ -19,6 +19,13 @@
 :root {
   color-scheme: light;
 
+  /* Per-look knobs — see the "Looks" block below. */
+  --fd: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --fd-weight: 500;
+  --fd-tracking: -0.015em;
+  --r-card: 0.875rem;
+  --r-tile: 0.5rem;
+
   --surface: #f7f5f0;      /* warm-white page background */
   --surface-2: #ebe5d8;    /* subtly raised / muted fill */
   --card: #ffffff;
@@ -143,13 +150,157 @@
   --shadow-card: none;
 }
 
+
+/* ------------------------------------------------------------------ *
+ * Looks. Four complete designs over the same tokens, chosen on the phone
+ * (Profile -> Look, or ?look=name) and applied as data-look on <html> by
+ * the no-flash script. The default — "paper" — is the :root/.dark set
+ * above; each block below overrides only what makes that look itself.
+ * ------------------------------------------------------------------ */
+
+/* MONO — black and white, nothing else. Sharp corners, tight sans. */
+html[data-look="mono"] {
+  --fd: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --fd-weight: 700;
+  --fd-tracking: -0.03em;
+  --r-card: 0.375rem;
+  --r-tile: 0.25rem;
+  --surface: #ffffff;
+  --surface-2: #f2f2f2;
+  --card: #ffffff;
+  --fg: #0a0a0a;
+  --muted: #666666;
+  --border: #d9d9d9;
+  --primary: #0a0a0a;
+  --primary-fg: #ffffff;
+  --primary-soft: #efefef;
+  --accent: #0a0a0a;
+  --accent-fg: #ffffff;
+  --accent-soft: #e6e6e6;
+  --ring: #0a0a0a;
+  --gold-fill: #0a0a0a;
+  --gold-fg: #ffffff;
+  --gold: #0a0a0a;
+  --gold-soft: #efefef;
+}
+html.dark[data-look="mono"] {
+  --surface: #000000;
+  --surface-2: #161616;
+  --card: #0d0d0d;
+  --fg: #fafafa;
+  --muted: #9a9a9a;
+  --border: #2a2a2a;
+  --primary: #fafafa;
+  --primary-fg: #000000;
+  --primary-soft: #1c1c1c;
+  --accent: #fafafa;
+  --accent-fg: #000000;
+  --accent-soft: #262626;
+  --ring: #fafafa;
+  --gold-fill: #fafafa;
+  --gold-fg: #000000;
+  --gold: #fafafa;
+  --gold-soft: #1c1c1c;
+}
+
+/* OCEAN — cool, clinical calm: slate blue on cloud grey, rounded, geometric sans. */
+html[data-look="ocean"] {
+  --fd: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --fd-weight: 800;
+  --fd-tracking: -0.02em;
+  --r-card: 1.25rem;
+  --r-tile: 0.875rem;
+  --surface: #eef2f6;
+  --surface-2: #e1e7ee;
+  --card: #ffffff;
+  --fg: #142033;
+  --muted: #5b6b80;
+  --border: #d6dee8;
+  --primary: #1f4f8f;
+  --primary-fg: #ffffff;
+  --primary-soft: #dfe9f7;
+  --accent: #1f4f8f;
+  --accent-fg: #ffffff;
+  --accent-soft: #dfe9f7;
+  --ring: #1f4f8f;
+  --success: #1d7a5a;
+  --success-soft: #dff2ea;
+  --danger: #c0392b;
+  --danger-soft: #fae3df;
+  --gold: #8a5b00;
+  --gold-fill: #f0b429;
+  --gold-soft: #fff3d1;
+}
+html.dark[data-look="ocean"] {
+  --surface: #0d1420;
+  --surface-2: #17212f;
+  --card: #121b29;
+  --fg: #e8eef6;
+  --muted: #94a3b8;
+  --border: #253347;
+  --primary: #8fb8ee;
+  --primary-fg: #08172b;
+  --primary-soft: #1c2d45;
+  --accent: #8fb8ee;
+  --accent-fg: #08172b;
+  --accent-soft: #1c2d45;
+  --ring: #8fb8ee;
+  --success: #6fcf9f;
+  --success-soft: #16302a;
+  --danger: #ef8a7e;
+  --danger-soft: #3a1c1a;
+  --gold: #f3cc6a;
+  --gold-fill: #f0b429;
+  --gold-soft: #33290f;
+}
+
+/* PLUM — soft lilac-grey paper, aubergine accent, generous serif. */
+html[data-look="plum"] {
+  --fd: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --fd-weight: 400;
+  --fd-tracking: -0.01em;
+  --r-card: 1.125rem;
+  --r-tile: 0.75rem;
+  --surface: #f4f1f5;
+  --surface-2: #e9e3ec;
+  --card: #fdfbfe;
+  --fg: #221a26;
+  --muted: #6d6172;
+  --border: #ddd4e0;
+  --primary: #221a26;
+  --primary-fg: #f8f4fa;
+  --primary-soft: #e9e3ec;
+  --accent: #6e3a72;
+  --accent-fg: #fbf3fc;
+  --accent-soft: #eddceE;
+  --ring: #6e3a72;
+  --gold: #7d5f16;
+  --gold-fill: #d9b45a;
+  --gold-soft: #f4ecd6;
+}
+html.dark[data-look="plum"] {
+  --surface: #171219;
+  --surface-2: #241d27;
+  --card: #1d171f;
+  --fg: #f1eaf3;
+  --muted: #a99db0;
+  --border: #372e3b;
+  --primary: #f1eaf3;
+  --primary-fg: #171219;
+  --primary-soft: #2b232e;
+  --accent: #c98bd0;
+  --accent-fg: #1e0f21;
+  --accent-soft: #3a2340;
+  --ring: #c98bd0;
+}
+
 /* Map tokens into Tailwind's theme. `inline` keeps utilities referencing the
  * CSS vars so .dark overrides propagate without regenerating utilities. */
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   /* Headings and the big numerals. A serif is what makes the page read as
    * a page, and it is the one thing no other app on the phone does. */
-  --font-display: var(--font-fraunces), "Iowan Old Style", Georgia, serif;
+  --font-display: var(--fd);
 
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
@@ -216,8 +367,8 @@
   --color-ring: var(--ring);
 
   /* Squarer than before: a printed page, not a bubble. */
-  --radius-card: 0.875rem;
-  --radius-tile: 0.5rem;
+  --radius-card: var(--r-card);
+  --radius-tile: var(--r-tile);
   --radius-pill: 999px;
 
   --shadow-float: var(--shadow-float);
@@ -259,8 +410,8 @@
   /* Every heading in the serif: one rule, the whole app reads as a page. */
   h1, h2 {
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.015em;
+    font-weight: var(--fd-weight);
+    letter-spacing: var(--fd-tracking);
     font-variation-settings: "opsz" 72, "SOFT" 30;
   }
   /* Visible focus for keyboard users on every interactive element. */
